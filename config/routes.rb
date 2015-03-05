@@ -5,5 +5,6 @@ Rails.application.routes.draw do
     resources :clubs
     resources :courses
     resources :levels
+    resources :packages
   end
 end
