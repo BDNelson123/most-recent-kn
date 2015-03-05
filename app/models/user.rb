@@ -5,6 +5,12 @@ class User < ActiveRecord::Base
           :omniauthable, :confirmable
   include DeviseTokenAuth::Concerns::User
 
+  has_one :level
+  has_one :package
+  has_one :course
+  has_one :club
+  has_one :income
+
   validates :name, :presence => true
   validates :address, :presence => true
   validates :city, :presence => true
@@ -12,9 +18,7 @@ class User < ActiveRecord::Base
   validates :zip, :presence => true
   validates :phone, :presence => true
   validates_numericality_of :phone, :only_integer => true, :length => {maximum: 15}
-  validates_date :dob, 
-    :before => lambda { 18.years.ago },
-    :before_message => "You must be at least 18 years old."
+  validates_date :dob, :before => lambda { 18.years.ago }, :before_message => "You must be at least 18 years old."
   validates :dob, :presence => true
   validates :owns_clubs, :inclusion => {:in => [true, false], :message => "must be yes or no"}
 
