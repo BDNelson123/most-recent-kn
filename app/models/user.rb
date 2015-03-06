@@ -1,8 +1,8 @@
 class User < ActiveRecord::Base
   # Include default devise modules.
   devise :database_authenticatable, :registerable,
-          :recoverable, :rememberable, :trackable, :validatable,
-          :omniauthable, :confirmable
+         :recoverable, :rememberable, :trackable, 
+         :validatable, :omniauthable, :confirmable
   include DeviseTokenAuth::Concerns::User
 
   has_one :level
@@ -35,4 +35,6 @@ class User < ActiveRecord::Base
   validates_uniqueness_of :email
   validates :password, :presence => true
   validates :password_confirmation, :presence => true
+
+  scope :common_attributes, -> { select('name, nickname, image, email, address, address2, city, state, zip, phone, dob, handedness, owns_clubs, email_optin, terms_accepted, gender')}
 end
