@@ -6,10 +6,22 @@ class V1::UsersController < ApplicationController
   end
 
   def show
-    render :json => User.common_attributes.find_by_id(params[:id])
+    user = User.common_attributes.find_by_id(params[:id])
+
+    if user
+      render json: user
+    else
+      render json: "This user was not found.", :status => :unprocessable_entity
+    end
   end
 
   def destroy
-    render :json => User.destroy(params[:id])
+    user = User.common_attributes.find_by_id(params[:id])
+
+    if user
+      render :json => User.destroy(params[:id])
+    else
+      render json: "This user was not found.", :status => :unprocessable_entity
+    end
   end
 end
