@@ -10,6 +10,7 @@ class User < ActiveRecord::Base
   has_one :course
   has_one :club
   has_one :income
+  has_one :bay
 
   validates :name, :presence => true
   validates :address, :presence => true
