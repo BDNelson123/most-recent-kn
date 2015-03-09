@@ -7,5 +7,6 @@ Rails.application.routes.draw do
     resources :levels
     resources :packages
     resources :bays
+    resources :assignments
   end
 end

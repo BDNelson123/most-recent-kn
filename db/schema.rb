@@ -11,7 +11,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150309153620) do
+ActiveRecord::Schema.define(version: 20150309155218) do
+
+  create_table "assignments", force: :cascade do |t|
+    t.integer  "bay_id",         limit: 4
+    t.integer  "user_id",        limit: 4
+    t.decimal  "rate",                     precision: 10
+    t.integer  "credits",        limit: 4
+    t.datetime "check_in_at"
+    t.time     "time_remaining"
+    t.datetime "created_at",                              null: false
+    t.datetime "updated_at",                              null: false
+  end
 
   create_table "bays", force: :cascade do |t|
     t.string   "kind",       limit: 255
