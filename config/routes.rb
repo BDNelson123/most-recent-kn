@@ -6,6 +6,6 @@ Rails.application.routes.draw do
     resources :courses
     resources :levels
     resources :packages
-    resources :users
+    resources :bays
   end
 end
