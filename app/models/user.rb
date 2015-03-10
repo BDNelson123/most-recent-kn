@@ -17,13 +17,14 @@ class User < ActiveRecord::Base
   validates :city, :presence => true
   validates :state, :presence => true
   validates :zip, :presence => true
-  validates :phone, :presence => true
-  validates_numericality_of :phone, :only_integer => true, :length => {maximum: 15}
+  validates :phone, :presence => true, :numericality => { :only_intger => true }, :length => { maximum: 15, minimum: 10 }
   validates_date :dob, :before => lambda { 18.years.ago }, :before_message => "You must be at least 18 years old."
   validates :dob, :presence => true
   validates :owns_clubs, :inclusion => {:in => [true, false], :message => "must be yes or no"}
-  validates :iron_club_id, :inclusion => {:in => self.club_array, :message => "must be a valid brand"}
-  validates :wood_club_id, :inclusion => {:in => self.club_array, :message => "must be a valid brand"}
+  validates :iron_club_id, :presence => true
+  validates :wood_club_id, :presence => true
+  validate :include_iron_id
+  validate :include_wood_id
 
   # NOTE:
   # handedness has a value of 0 for left, and 1 for right
@@ -41,17 +42,13 @@ class User < ActiveRecord::Base
 
   scope :common_attributes, -> { select('name, nickname, image, email, address, address2, city, state, zip, phone, dob, handedness, owns_clubs, email_optin, terms_accepted, gender')}
 
-  # this is to put all the ids in an array so that we can
-  # verify if the user selected an actual club brand from 
-  # the database for the validation
-  def club_array
-    clubs = Club.all
-    array = []
+  # custom validation for wood_club_id
+  def include_wood_id
+    errors.add(:wood_club_id, "must be a valid brand") unless Common.club_array.include?(wood_club_id)
+  end
 
-    clubs.each do |t|
-      array.push(t.id)
-    end
-
-    return array
+  # custom validation for iron_club_id
+  def include_iron_id
+    errors.add(:iron_club_id, "must be a valid brand") unless Common.club_array.include?(iron_club_id)
   end
 end
