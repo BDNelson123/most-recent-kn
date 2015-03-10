@@ -22,6 +22,8 @@ class User < ActiveRecord::Base
   validates_date :dob, :before => lambda { 18.years.ago }, :before_message => "You must be at least 18 years old."
   validates :dob, :presence => true
   validates :owns_clubs, :inclusion => {:in => [true, false], :message => "must be yes or no"}
+  validates :iron_club_id, :inclusion => {:in => self.club_array, :message => "must be a valid brand"}
+  validates :wood_club_id, :inclusion => {:in => self.club_array, :message => "must be a valid brand"}
 
   # NOTE:
   # handedness has a value of 0 for left, and 1 for right
@@ -38,4 +40,18 @@ class User < ActiveRecord::Base
   validates :password_confirmation, :presence => true
 
   scope :common_attributes, -> { select('name, nickname, image, email, address, address2, city, state, zip, phone, dob, handedness, owns_clubs, email_optin, terms_accepted, gender')}
+
+  # this is to put all the ids in an array so that we can
+  # verify if the user selected an actual club brand from 
+  # the database for the validation
+  def club_array
+    clubs = Club.all
+    array = []
+
+    clubs.each do |t|
+      array.push(t.id)
+    end
+
+    return array
+  end
 end
