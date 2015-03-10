@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150309155218) do
+ActiveRecord::Schema.define(version: 20150310142816) do
 
   create_table "assignments", force: :cascade do |t|
     t.integer  "bay_id",         limit: 4
@@ -112,8 +112,10 @@ ActiveRecord::Schema.define(version: 20150309155218) do
     t.integer  "level_id",               limit: 4
     t.integer  "package_id",             limit: 4
     t.integer  "course_id",              limit: 4
-    t.integer  "club_id",                limit: 4
     t.integer  "income_id",              limit: 4
+    t.integer  "role_id",                limit: 4
+    t.integer  "iron_club_id",           limit: 4
+    t.integer  "wood_club_id",           limit: 4
   end
 
   add_index "users", ["email"], name: "index_users_on_email", using: :btree
