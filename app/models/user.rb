@@ -25,20 +25,13 @@ class User < ActiveRecord::Base
   validates :wood_club_id, :presence => true
   validate :include_iron_id
   validate :include_wood_id
-
-  # NOTE:
   # handedness has a value of 0 for left, and 1 for right
   validates :handedness, :inclusion => {:in => [true, false], :message => "must be left or right"}
-
-  # NOTE:
   # gender has a value of 0 for female, and 1 for male
   validates :gender, :inclusion => {:in => [true, false], :message => "must be male or female"}
-
   validates :email, :presence => true
   validates_email_format_of :email
   validates_uniqueness_of :email
-  validates :password, :presence => true
-  validates :password_confirmation, :presence => true
 
   scope :common_attributes, -> { select('name, nickname, image, email, address, address2, city, state, zip, phone, dob, handedness, owns_clubs, email_optin, terms_accepted, gender')}
 
