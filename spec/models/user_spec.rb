@@ -381,7 +381,8 @@ describe User do
           :owns_clubs => false, :iron_club_id => @club1.id, :wood_club_id => @club2.id,
           :gender => false, :email => Faker::Internet.email, :password => nil, :password_confirmation => "test1234"
         )
-        user.should have(2).error_on(:password)
+        user.should have(1).error_on(:password)
+        user.should have(1).error_on(:password_confirmation)
       end
 
       it "should return one error if password does not equal password_confirmation" do
