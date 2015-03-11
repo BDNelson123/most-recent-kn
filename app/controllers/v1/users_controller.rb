@@ -1,6 +1,8 @@
 class V1::UsersController < ApplicationController
   respond_to :json
 
+  before_action :authenticate_user!, :only => [:index, :show, :destroy]
+
   def index
     render :json => User.common_attributes
   end
