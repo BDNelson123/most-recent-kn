@@ -25,7 +25,7 @@ describe "user authentication", :type => :request do
     @user_expiry    = @user_auth_headers['expiry']
   end
 
-  # destroying the club objects after tests run
+  # destroying the clubs & users objects after tests run
   after(:all) do
     Club.destroy_all
     User.destroy_all
@@ -45,49 +45,6 @@ describe "user authentication", :type => :request do
       expect(response.status).to eq(200)
       expect(JSON.parse(response.body)["status"]).to eq("success")
       expect(JSON.parse(response.body)["data"]["id"]).to eq(User.last.id)
-    end
-  end
-
-  # this action is in the users controller
-  describe "#index" do
-    it "get user index action - user must be signed in to get 200 response" do
-      get '/v1/users', {}, @user_auth_headers
-      expect(response.status).to eq(200)
-      expect(JSON.parse(response.body)[0]["email"]).to eq(@user.email)
-    end
-
-    it "get user index action - user will get 401 response if not logged in" do
-      get '/v1/users'
-      expect(response.status).to eq(401)
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Authorized users only."]})
-    end
-  end
-
-  # this action is in the users controller
-  describe "#show" do
-    it "get user show action - user must be signed in to get 200 response" do
-      get '/v1/users', { :id => @user.id }, @user_auth_headers
-      expect(response.status).to eq(200)
-      expect(JSON.parse(response.body)[0]["email"]).to eq(@user.email)
-    end
-
-    it "get user show action - user will get 401 response if not logged in" do
-      get '/v1/users', { :id => @user.id }
-      expect(response.status).to eq(401)
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Authorized users only."]})
-    end
-  end
-
-  # this action is in the users controller
-  describe "#destroy" do
-    it "delete user destroy action - user must be signed in to get 200 response" do
-      delete "/v1/users/#{@user.id}", {}, @user_auth_headers
-      expect(response.status).to eq(200)
-    end
-
-    it "delete user destroy action - user will get 401 response if not logged in" do
-      delete "/v1/users/#{@user.id}"
-      expect(response.status).to eq(401)
     end
   end
 end
