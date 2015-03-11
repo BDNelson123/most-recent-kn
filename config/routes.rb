@@ -8,5 +8,6 @@ Rails.application.routes.draw do
     resources :packages
     resources :bays
     resources :assignments
+    resources :users
   end
 end
