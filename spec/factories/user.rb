@@ -17,6 +17,10 @@ FactoryGirl.define do
     owns_clubs false
     iron_club_id 1
     wood_club_id 1
+    email_optin true
+    terms_accepted true
+    level_id 1
+    income_id 1
     gender false
     email { Faker::Internet.email }
     password "test1234"
