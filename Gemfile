@@ -24,4 +24,9 @@ group :development, :test do
   gem 'json_spec', '1.1.4'
 end
 
+group :production do
+  # heroku gem for rails - remove if not using heroku
+  gem 'rails_12factor'
+end
+
 ruby '2.1.5'
