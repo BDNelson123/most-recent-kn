@@ -24,4 +24,4 @@ group :development, :test do
   gem 'json_spec', '1.1.4'
 end
 
-ruby '2.1.1'
+ruby '2.1.5'
