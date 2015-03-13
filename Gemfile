@@ -25,7 +25,7 @@ group :development, :test do
 end
 
 group :production do
-  # heroku gem for rails - remove if not using heroku
+  # Heroku hack: remove this gem if not using heroku
   gem 'rails_12factor'
 end
 
