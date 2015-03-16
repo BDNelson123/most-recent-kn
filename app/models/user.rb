@@ -8,7 +8,8 @@ class User < ActiveRecord::Base
   has_one :level
   has_one :package
   has_one :course
-  has_one :club
+  has_one :wood_club, class_name: "Club", foreign_key: :wood_club_id
+  has_one :iron_club, class_name: "Club", foreign_key: :iron_club_id
   has_one :income
   has_one :bay
 
