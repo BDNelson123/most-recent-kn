@@ -9,5 +9,6 @@ Rails.application.routes.draw do
     resources :bays
     resources :assignments
     resources :users
+    resources :incomes
   end
 end
