@@ -60,5 +60,10 @@ describe V1::ClubsController, :type => :api do
       get :show, { 'id' => @club3.id + 1 }
       expect(JSON.parse(response.body)['errors'].to_s).to eq("The club with id #{@club3.id + 1} could not be found.")
     end
+
+    it "should return the correct status if the club id can't be found" do
+      get :show, { 'id' => @club3.id + 1 }
+      expect(response.status).to eq(422)
+    end
   end
 end
