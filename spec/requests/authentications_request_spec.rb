@@ -24,6 +24,7 @@ describe "user authentication", :type => :request do
     User.destroy_all
     Income.destroy_all
     User.destroy_all
+    Level.destroy_all
   end
 
   # this action is in the devise_token_auth registrations controller
