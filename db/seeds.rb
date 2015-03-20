@@ -1260,7 +1260,17 @@ Level.create!([
   {id: 5, name: "Junior", handicap: "No Handicap", description: "Rarely Plays"}
 ])
 Package.create!([
-  {id: 1, name: "Bronze", description: nil, features: ["FlyingTee Membership card", "20 credits"], price: "22.0"},
-  {id: 2, name: "Silver", description: nil, features: ["FlyingTee Membership card", "60 credits", "2 free premium club set rentals"], price: "50.0"},
-  {id: 3, name: "Gold", description: nil, features: ["FlyingTee Membership card", "120 credits", "5 free premium club set rentals", "10% off food and beverage"], price: "100.0"}
+  {id: 1, name: "Bronze", description: "FlyingTee Membership card", credits: 20, price: "22.0"},
+  {id: 2, name: "Silver", description: "FlyingTee Membership card", credits: 60, price: "50.0"},
+  {id: 3, name: "Gold", description: "FlyingTee Membership card", credits: 120, price: "100.0"}
+])
+Feature.create!([
+  {id: 1, description: "2 free premium club set rentals"},
+  {id: 2, description: "5 free premium club set rentals"},
+  {id: 3, description: "10% off food and beverage"}
+])
+Featurization.create!([
+  {id: 1, package_id: 2, feature_id: 1},
+  {id: 2, package_id: 3, feature_id: 2},
+  {id: 3, package_id: 3, feature_id: 3}
 ])
