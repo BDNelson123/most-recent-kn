@@ -2,7 +2,7 @@ class V1::PackagesController < ApplicationController
   respond_to :json
 
   def index
-    render :json => Package.joins(:features).feature_attributes.group("packages.id").all
+    render :json => Package.feature_join.feature_attributes.group("packages.id").all
   end
 
   def show
