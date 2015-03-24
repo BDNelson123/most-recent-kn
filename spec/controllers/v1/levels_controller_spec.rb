@@ -10,7 +10,7 @@ describe V1::LevelsController do
   end
 
   after(:all) do
-    Level.destroy_all
+    delete_factories
   end
 
   # INDEX action tests

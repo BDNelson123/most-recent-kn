@@ -8,7 +8,7 @@ describe V1::CoursesController, :type => :api do
   end
 
   after(:all) do
-    Course.destroy_all
+    delete_factories
   end
 
   # INDEX action tests

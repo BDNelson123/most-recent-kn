@@ -8,7 +8,7 @@ describe V1::ClubsController, :type => :api do
   end
 
   after(:all) do
-    Club.destroy_all
+    delete_factories
   end
 
   # INDEX action tests

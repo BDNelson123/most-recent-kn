@@ -8,7 +8,7 @@ describe V1::IncomesController do
   end
 
   after(:all) do
-    Income.destroy_all
+    delete_factories
   end
 
   # INDEX action tests

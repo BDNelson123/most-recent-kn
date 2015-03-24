@@ -17,7 +17,6 @@ describe V1::PackagesController do
   end
 
   after(:all) do
-    # delete all factories
     delete_factories
   end 
 
@@ -70,7 +69,7 @@ describe V1::PackagesController do
 
     it "should return 1 record" do
       get :show, { 'id' => @package1.id }
-      expect(JSON.parse(response.body).length).to eq(5) # 5 fields for one record (id, name, description, features, price)
+      expect(JSON.parse(response.body).length).to eq(6) # 6 fields for one record (id, name, description, features, price, credits)
     end
 
     it "should return the correct data for package1" do
