@@ -1,5 +1,16 @@
 class V1::PackagesController < ApplicationController
   respond_to :json
+  #before_action :authenticate_user!, :only => [:create]
+
+  def create
+    package = Package.new(package_params)
+
+    if package.save
+      render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => :created
+    else
+      render :json => { :errors => package.errors.full_messages.to_sentence }, :status => 422
+    end
+  end
 
   def index
     render :json => Package.feature_join.feature_attributes.group("packages.id").all
@@ -8,10 +19,18 @@ class V1::PackagesController < ApplicationController
   def show
     package = Package.joins(:features).feature_attributes.find_by_id(params[:id])
 
-    if package
+    if package.id != nil
       render :json => package
     else
       render :json => { :errors => "The package with id #{params[:id]} could not be found." }, :status => 422
     end
+  end
+
+  private
+
+  def package_params
+    _params = params.require(:package).permit(
+      :name, :description, :price, :credits, :featurizations_attributes => [:feature_id]
+    )
   end
 end

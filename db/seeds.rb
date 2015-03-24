@@ -1265,9 +1265,9 @@ Package.create!([
   {id: 3, name: "Gold", description: "FlyingTee Membership card", credits: 120, price: "100.0"}
 ])
 Feature.create!([
-  {id: 1, description: "2 free premium club set rentals"},
-  {id: 2, description: "5 free premium club set rentals"},
-  {id: 3, description: "10% off food and beverage"}
+  {id: 1, name: "2 free premium club set rentals"},
+  {id: 2, name: "5 free premium club set rentals"},
+  {id: 3, name: "10% off food and beverage"}
 ])
 Featurization.create!([
   {id: 1, package_id: 2, feature_id: 1},
