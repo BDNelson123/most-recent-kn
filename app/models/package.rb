@@ -1,6 +1,6 @@
 class Package < ActiveRecord::Base
   belongs_to :user
-  has_many :featurizations
+  has_many :featurizations, :dependent => :destroy
   has_many :features, :through => :featurizations
   accepts_nested_attributes_for :featurizations
   before_save :delete_duplicate_featurizations
