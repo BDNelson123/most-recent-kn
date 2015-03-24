@@ -1,5 +1,6 @@
 require 'spec_helper'
 include Devise::TestHelpers
+include SpecHelpers
 
 describe V1::PackagesController do
   before(:all) do
@@ -12,20 +13,12 @@ describe V1::PackagesController do
     @package3 = FactoryGirl.create(:package, :name => "Gold", :description => "FlyingTee Membership card", :credits => 120, :price => "100.0", :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
 
     # create user factory
-    @income = FactoryGirl.create(:income)
-    @level = FactoryGirl.create(:level)
-    @club = FactoryGirl.create(:club)
-    @user = FactoryGirl.create(:user, :wood_club_id => @club.id, :iron_club_id => @club.id, :level_id => @level.id, :income_id => @income.id)
+    create_user
   end
 
   after(:all) do
-    Package.destroy_all
-    Feature.destroy_all
-    Featurization.destroy_all
-    User.destroy_all
-    Club.destroy_all
-    Level.destroy_all
-    Income.destroy_all
+    # delete all factories
+    delete_factories
   end 
 
   # CREATE action tests
@@ -36,10 +29,10 @@ describe V1::PackagesController do
     end
 
     it "should return a response status of 200 if user is logged in" do
-      #sign_in @user
+      sign_in @user
       request.headers.merge!(@user.create_new_auth_token)
       post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20}
-      pp response.status
+      expect(response.status).to eq(201)
     end
   end
 
