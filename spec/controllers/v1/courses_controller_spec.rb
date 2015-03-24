@@ -1,4 +1,5 @@
 require 'spec_helper'
+include SpecHelpers
 
 describe V1::CoursesController, :type => :api do
   before(:all) do
@@ -20,15 +21,15 @@ describe V1::CoursesController, :type => :api do
 
     it "should return 3 total rows" do
       get :index
-      expect(JSON.parse(response.body).length).to eq(3)
+      expect(JSON.parse(response.body)['data'].length).to eq(3)
     end
 
     # NOTE: index controller orders by name desc
     it "should return the correct values" do
       get :index
-      expect(JSON.parse(response.body)[0]['name'].to_s).to eq(@course1.name.to_s)
-      expect(JSON.parse(response.body)[1]['name'].to_s).to eq(@course2.name.to_s)
-      expect(JSON.parse(response.body)[2]['name'].to_s).to eq(@course3.name.to_s)
+      expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@course1.name.to_s)
+      expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@course2.name.to_s)
+      expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@course3.name.to_s)
     end
   end
 
@@ -41,29 +42,29 @@ describe V1::CoursesController, :type => :api do
 
     it "should return 1 record" do
       get :show, { 'id' => @course1.id }
-      expect(JSON.parse(response.body).length).to eq(7) # 7 fields for one record (id, name, address, address2, city, state, zip)
+      expect(JSON.parse(response.body)['data'].length).to eq(7) # 7 fields for one record (id, name, address, address2, city, state, zip)
     end
 
     it "should return the correct data for course1" do
       get :show, { 'id' => @course1.id }
-      expect(JSON.parse(response.body)['id'].to_i).to eq(@course1.id.to_i)
-      expect(JSON.parse(response.body)['name'].to_s).to eq(@course1.name.to_s)
-      expect(JSON.parse(response.body)['address'].to_s).to eq(@course1.address.to_s)
-      expect(JSON.parse(response.body)['address2'].to_s).to eq(@course1.address2.to_s)
-      expect(JSON.parse(response.body)['city'].to_s).to eq(@course1.city.to_s)
-      expect(JSON.parse(response.body)['state'].to_s).to eq(@course1.state.to_s)
-      expect(JSON.parse(response.body)['zip'].to_i).to eq(@course1.zip.to_i)
+      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@course1.id.to_i)
+      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@course1.name.to_s)
+      expect(JSON.parse(response.body)['data']['address'].to_s).to eq(@course1.address.to_s)
+      expect(JSON.parse(response.body)['data']['address2'].to_s).to eq(@course1.address2.to_s)
+      expect(JSON.parse(response.body)['data']['city'].to_s).to eq(@course1.city.to_s)
+      expect(JSON.parse(response.body)['data']['state'].to_s).to eq(@course1.state.to_s)
+      expect(JSON.parse(response.body)['data']['zip'].to_i).to eq(@course1.zip.to_i)
     end
 
     it "should return the correct data for course2" do
       get :show, { 'id' => @course2.id }
-      expect(JSON.parse(response.body)['id'].to_i).to eq(@course2.id.to_i)
-      expect(JSON.parse(response.body)['name'].to_s).to eq(@course2.name.to_s)
-      expect(JSON.parse(response.body)['address'].to_s).to eq(@course2.address.to_s)
-      expect(JSON.parse(response.body)['address2'].to_s).to eq(@course2.address2.to_s)
-      expect(JSON.parse(response.body)['city'].to_s).to eq(@course2.city.to_s)
-      expect(JSON.parse(response.body)['state'].to_s).to eq(@course2.state.to_s)
-      expect(JSON.parse(response.body)['zip'].to_i).to eq(@course2.zip.to_i)
+      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@course2.id.to_i)
+      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@course2.name.to_s)
+      expect(JSON.parse(response.body)['data']['address'].to_s).to eq(@course2.address.to_s)
+      expect(JSON.parse(response.body)['data']['address2'].to_s).to eq(@course2.address2.to_s)
+      expect(JSON.parse(response.body)['data']['city'].to_s).to eq(@course2.city.to_s)
+      expect(JSON.parse(response.body)['data']['state'].to_s).to eq(@course2.state.to_s)
+      expect(JSON.parse(response.body)['data']['zip'].to_i).to eq(@course2.zip.to_i)
     end
 
     it "should return the correct error if the course id can't be found" do
