@@ -1,12 +1,12 @@
 class V1::PackagesController < ApplicationController
   respond_to :json
-  #before_action :authenticate_user!, :only => [:create]
+  before_action :authenticate_user!, :only => [:create]
 
   def create
     package = Package.new(package_params)
 
     if package.save
-      render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => :created
+      render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => 201
     else
       render :json => { :errors => package.errors.full_messages.to_sentence }, :status => 422
     end
@@ -23,6 +23,18 @@ class V1::PackagesController < ApplicationController
       render :json => package
     else
       render :json => { :errors => "The package with id #{params[:id]} could not be found." }, :status => 422
+    end
+  end
+
+  def update
+    package = Package.find_by_id(params[:id])
+
+    if package.blank?
+      render :json => { :errors => "The package with id #{params[:id]} could not be found." }, :status => 422
+    elsif package.update(package_params)
+      render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => 201
+    else
+      render :json => { :errors => package.errors.full_messages.to_sentence }, :status => 422
     end
   end
 
