@@ -7,6 +7,7 @@ module SpecHelpers
     Club.destroy_all
     Level.destroy_all
     Income.destroy_all
+    Course.destroy_all
   end
 
   def create_user
