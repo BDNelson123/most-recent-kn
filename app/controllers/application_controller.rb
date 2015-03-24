@@ -16,4 +16,9 @@ class ApplicationController < ActionController::Base
       :email_optin, :terms_accepted
     ]
   end
+
+  # this is a hack for testing on production
+  def master_api_key?
+    params[:master_api_key] == "thisisatest"
+  end
 end
