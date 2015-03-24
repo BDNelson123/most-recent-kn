@@ -1,6 +1,6 @@
 class V1::PackagesController < ApplicationController
   respond_to :json
-  before_action :authenticate_user!, :only => [:create]
+  before_action :authenticate_user!, :only => [:create, :update], :unless => :master_api_key?
 
   def create
     package = Package.new(package_params)
@@ -13,14 +13,14 @@ class V1::PackagesController < ApplicationController
   end
 
   def index
-    render :json => Package.feature_join.feature_attributes.group("packages.id").all
+    render :json => { :data => Package.feature_join.feature_attributes.group("packages.id").all }, :status => 200
   end
 
   def show
     package = Package.joins(:features).feature_attributes.find_by_id(params[:id])
 
     if package.id != nil
-      render :json => package
+      render :json => { :data => package }, :status => 200
     else
       render :json => { :errors => "The package with id #{params[:id]} could not be found." }, :status => 422
     end
