@@ -21,16 +21,99 @@ describe V1::PackagesController do
 
   # CREATE action tests
   describe "#create" do
-    it "should return a response status of 401 if user is not logged in" do
-      post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20}
-      expect(response.status).to eq(401)
+    context "authentication" do
+      it "should return a response status of 401 if user is not logged in" do
+        post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features1.id}]}
+        expect(response.status).to eq(401)
+      end
+
+      it "should return a response status of 200 if user is logged in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, 
+          format: :json, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}
+        expect(response.status).to eq(201)
+      end
     end
 
-    it "should return a response status of 200 if user is logged in" do
-      sign_in @user
-      request.headers.merge!(@user.create_new_auth_token)
-      post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20}
-      expect(response.status).to eq(201)
+    context "validations" do
+      it "should return 1 error for feature when its not a valid id" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        post :create, 
+          format: :json,  
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id + 1}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Featurizations feature must have a valid id")
+      end
+
+      it "should return 1 error for name when its blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        post :create, 
+          format: :json, 
+          :package => {:name => "", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Name can't be blank")
+      end
+
+      it "should return 1 error for description when its blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        post :create, 
+          format: :json, 
+          :package => {:name => "test", :description => "", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Description can't be blank")
+      end
+
+      it "should return 2 errors for price when its blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        post :create, 
+          format: :json, 
+          :package => {:name => "test", :description => "test", :price => nil, :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Price can't be blank and Price is not a number")
+      end
+
+      it "should return 1 error for price when its not numeric" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        post :create, 
+          format: :json, 
+          :package => {:name => "test", :description => "test", :price => "test", :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Price is not a number")
+      end
+
+      it "should return 2 errors for credits when its blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        post :create, 
+          format: :json, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => nil, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Credits can't be blank and Credits is not a number")
+      end
+
+      it "should return 1 error for credits when its not an integer" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        post :create, 
+          format: :json, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => "test", :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Credits is not a number")
+      end
     end
   end
 
@@ -98,6 +181,147 @@ describe V1::PackagesController do
     it "should return the correct status if the package id can't be found" do
       get :show, { 'id' => @package3.id + 1 }
       expect(response.status).to eq(422)
+    end
+  end
+
+  # UPDATE action tests
+  describe "#update" do
+    context "authentication" do
+      it "should return a status of 422 if user is not logged in" do
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :features => [Feature.find_by_id(@features1.id),Feature.find_by_id(@features2.id)]}
+        expect(response.status).to eq(401)
+      end
+
+      it "should return a status of 201 if user is logged in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :features => [Feature.find_by_id(@features1.id),Feature.find_by_id(@features2.id)]}
+        expect(response.status).to eq(201)
+      end
+    end
+
+    context "correct data" do
+      it "should return 6 fields" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :features => [Feature.find_by_id(@features1.id),Feature.find_by_id(@features2.id)]}
+        expect(JSON.parse(response.body)['data'].length).to eq(6)
+      end
+
+      it "should return only the last two features and not the first one" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id}, {:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to include("5 free premium club set rentals")
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to include("10% off food and beverage")
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to_not include("2 free premium club set rentals")
+      end
+    end
+
+    context "validations" do
+      it "should return 1 error for feature when its not a valid id" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id + 1}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Featurizations feature must have a valid id")
+      end
+
+      it "should return 1 error for name when its blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Name can't be blank")
+      end
+
+      it "should return 1 error for description when its blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Description can't be blank")
+      end
+
+      it "should return 2 errors for price when its blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => nil, :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Price can't be blank and Price is not a number")
+      end
+
+      it "should return 1 error for price when its not numeric" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "test", :credits => 20, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Price is not a number")
+      end
+
+      it "should return 2 errors for credits when its blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => nil, :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Credits can't be blank and Credits is not a number")
+      end
+
+      it "should return 1 error for credits when its not an integer" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => "test", :featurizations_attributes => [{:feature_id => @features3.id}]}
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("Credits is not a number")
+      end
     end
   end
 end
