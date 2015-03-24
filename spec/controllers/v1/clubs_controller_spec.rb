@@ -1,4 +1,5 @@
 require 'spec_helper'
+include SpecHelpers
 
 describe V1::ClubsController, :type => :api do
   before(:all) do
@@ -20,15 +21,15 @@ describe V1::ClubsController, :type => :api do
 
     it "should return 3 total rows" do
       get :index
-      expect(JSON.parse(response.body).length).to eq(3)
+      expect(JSON.parse(response.body)['data'].length).to eq(3)
     end
 
     # NOTE: index controller orders by name desc
     it "should return the correct values" do
       get :index
-      expect(JSON.parse(response.body)[0]['name'].to_s).to eq(@club2.name.to_s)
-      expect(JSON.parse(response.body)[1]['name'].to_s).to eq(@club3.name.to_s)
-      expect(JSON.parse(response.body)[2]['name'].to_s).to eq(@club1.name.to_s)
+      expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@club2.name.to_s)
+      expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@club3.name.to_s)
+      expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@club1.name.to_s)
     end
   end
 
@@ -41,19 +42,19 @@ describe V1::ClubsController, :type => :api do
 
     it "should return 1 record" do
       get :show, { 'id' => @club1.id }
-      expect(JSON.parse(response.body).length).to eq(2) # 2 fields for one record (id and name)
+      expect(JSON.parse(response.body)['data'].length).to eq(2) # 2 fields for one record (id and name)
     end
 
     it "should return the correct data for club1" do
       get :show, { 'id' => @club1.id }
-      expect(JSON.parse(response.body)['id'].to_i).to eq(@club1.id.to_i)
-      expect(JSON.parse(response.body)['name'].to_s).to eq(@club1.name.to_s)
+      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@club1.id.to_i)
+      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@club1.name.to_s)
     end
 
     it "should return the correct data for club2" do
       get :show, { 'id' => @club2.id }
-      expect(JSON.parse(response.body)['id'].to_i).to eq(@club2.id.to_i)
-      expect(JSON.parse(response.body)['name'].to_s).to eq(@club2.name.to_s)
+      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@club2.id.to_i)
+      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@club2.name.to_s)
     end
 
     it "should return the correct error if the club id can't be found" do

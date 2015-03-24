@@ -1,4 +1,5 @@
 require 'spec_helper'
+include SpecHelpers
 
 describe V1::LevelsController do
   before(:all) do
@@ -22,31 +23,31 @@ describe V1::LevelsController do
 
     it "should return 5 total rows" do
       get :index
-      expect(JSON.parse(response.body).length).to eq(5)
+      expect(JSON.parse(response.body)['data'].length).to eq(5)
     end
 
     # NOTE: index controller orders by id desc
     it "should return the correct values" do
       get :index
-      expect(JSON.parse(response.body)[4]['name'].to_s).to eq(@level1.name.to_s)
-      expect(JSON.parse(response.body)[4]['handicap'].to_s).to eq(@level1.handicap.to_s)
-      expect(JSON.parse(response.body)[4]['description'].to_s).to eq(@level1.description.to_s)
+      expect(JSON.parse(response.body)['data'][4]['name'].to_s).to eq(@level1.name.to_s)
+      expect(JSON.parse(response.body)['data'][4]['handicap'].to_s).to eq(@level1.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][4]['description'].to_s).to eq(@level1.description.to_s)
 
-      expect(JSON.parse(response.body)[3]['name'].to_s).to eq(@level2.name.to_s)
-      expect(JSON.parse(response.body)[3]['handicap'].to_s).to eq(@level2.handicap.to_s)
-      expect(JSON.parse(response.body)[3]['description'].to_s).to eq(@level2.description.to_s)
+      expect(JSON.parse(response.body)['data'][3]['name'].to_s).to eq(@level2.name.to_s)
+      expect(JSON.parse(response.body)['data'][3]['handicap'].to_s).to eq(@level2.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][3]['description'].to_s).to eq(@level2.description.to_s)
 
-      expect(JSON.parse(response.body)[2]['name'].to_s).to eq(@level3.name.to_s)
-      expect(JSON.parse(response.body)[2]['handicap'].to_s).to eq(@level3.handicap.to_s)
-      expect(JSON.parse(response.body)[2]['description'].to_s).to eq(@level3.description.to_s)
+      expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@level3.name.to_s)
+      expect(JSON.parse(response.body)['data'][2]['handicap'].to_s).to eq(@level3.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][2]['description'].to_s).to eq(@level3.description.to_s)
 
-      expect(JSON.parse(response.body)[1]['name'].to_s).to eq(@level4.name.to_s)
-      expect(JSON.parse(response.body)[1]['handicap'].to_s).to eq(@level4.handicap.to_s)
-      expect(JSON.parse(response.body)[1]['description'].to_s).to eq(@level4.description.to_s)
+      expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@level4.name.to_s)
+      expect(JSON.parse(response.body)['data'][1]['handicap'].to_s).to eq(@level4.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][1]['description'].to_s).to eq(@level4.description.to_s)
 
-      expect(JSON.parse(response.body)[0]['name'].to_s).to eq(@level5.name.to_s)
-      expect(JSON.parse(response.body)[0]['handicap'].to_s).to eq(@level5.handicap.to_s)
-      expect(JSON.parse(response.body)[0]['description'].to_s).to eq(@level5.description.to_s)
+      expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@level5.name.to_s)
+      expect(JSON.parse(response.body)['data'][0]['handicap'].to_s).to eq(@level5.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][0]['description'].to_s).to eq(@level5.description.to_s)
     end
   end
 
@@ -59,23 +60,23 @@ describe V1::LevelsController do
 
     it "should return 1 record" do
       get :show, { 'id' => @level1.id }
-      expect(JSON.parse(response.body).length).to eq(4) # 4 fields for one record (id, name, handicap, description,)
+      expect(JSON.parse(response.body)['data'].length).to eq(4) # 4 fields for one record (id, name, handicap, description,)
     end
 
     it "should return the correct data for level1" do
       get :show, { 'id' => @level1.id }
-      expect(JSON.parse(response.body)['id'].to_i).to eq(@level1.id.to_i)
-      expect(JSON.parse(response.body)['name'].to_s).to eq(@level1.name.to_s)
-      expect(JSON.parse(response.body)['handicap'].to_s).to eq(@level1.handicap.to_s)
-      expect(JSON.parse(response.body)['description'].to_s).to eq(@level1.description.to_s)
+      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@level1.id.to_i)
+      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@level1.name.to_s)
+      expect(JSON.parse(response.body)['data']['handicap'].to_s).to eq(@level1.handicap.to_s)
+      expect(JSON.parse(response.body)['data']['description'].to_s).to eq(@level1.description.to_s)
     end
 
     it "should return the correct data for level2" do
       get :show, { 'id' => @level2.id }
-      expect(JSON.parse(response.body)['id'].to_i).to eq(@level2.id.to_i)
-      expect(JSON.parse(response.body)['name'].to_s).to eq(@level2.name.to_s)
-      expect(JSON.parse(response.body)['handicap'].to_s).to eq(@level2.handicap.to_s)
-      expect(JSON.parse(response.body)['description'].to_s).to eq(@level2.description.to_s)
+      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@level2.id.to_i)
+      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@level2.name.to_s)
+      expect(JSON.parse(response.body)['data']['handicap'].to_s).to eq(@level2.handicap.to_s)
+      expect(JSON.parse(response.body)['data']['description'].to_s).to eq(@level2.description.to_s)
     end
 
     it "should return the correct error if the level id can't be found" do
