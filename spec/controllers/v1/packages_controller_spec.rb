@@ -12,7 +12,6 @@ describe V1::PackagesController do
     @package2 = FactoryGirl.create(:package, :name => "Silver", :description => "FlyingTee Membership card", :credits => 60, :price => "50.0", :features => [Feature.find_by_id(@features1.id)])
     @package3 = FactoryGirl.create(:package, :name => "Gold", :description => "FlyingTee Membership card", :credits => 120, :price => "100.0", :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
 
-    # create user factory
     create_user
   end
 
@@ -44,19 +43,19 @@ describe V1::PackagesController do
 
     it "should return 3 total rows" do
       get :index
-      expect(JSON.parse(response.body).length).to eq(3)
+      expect(JSON.parse(response.body)['data'].length).to eq(3)
     end
 
     # NOTE: index controller orders by name desc
     it "should return the correct values" do
       get :index
-      expect(JSON.parse(response.body)[0]['name'].to_s).to eq(@package1.name.to_s)
-      expect(JSON.parse(response.body)[0]['package_features'].to_s).to eq("")
-      expect(JSON.parse(response.body)[1]['name'].to_s).to eq(@package2.name.to_s)
-      expect(JSON.parse(response.body)[1]['package_features'].to_s).to include("2 free premium club set rentals")
-      expect(JSON.parse(response.body)[2]['name'].to_s).to eq(@package3.name.to_s)
-      expect(JSON.parse(response.body)[2]['package_features'].to_s).to include("5 free premium club set rentals")
-      expect(JSON.parse(response.body)[2]['package_features'].to_s).to include("10% off food and beverage")
+      expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@package1.name.to_s)
+      expect(JSON.parse(response.body)['data'][0]['package_features'].to_s).to eq("")
+      expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@package2.name.to_s)
+      expect(JSON.parse(response.body)['data'][1]['package_features'].to_s).to include("2 free premium club set rentals")
+      expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@package3.name.to_s)
+      expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include("5 free premium club set rentals")
+      expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include("10% off food and beverage")
     end
   end
 
@@ -69,26 +68,26 @@ describe V1::PackagesController do
 
     it "should return 1 record" do
       get :show, { 'id' => @package1.id }
-      expect(JSON.parse(response.body).length).to eq(6) # 6 fields for one record (id, name, description, features, price, credits)
+      expect(JSON.parse(response.body)['data'].length).to eq(6) # 6 fields for one record (id, name, description, features, price, credits)
     end
 
     it "should return the correct data for package1" do
       get :show, { 'id' => @package1.id }
-      expect(JSON.parse(response.body)['id'].to_i).to eq(@package1.id.to_i)
-      expect(JSON.parse(response.body)['name'].to_s).to eq(@package1.name.to_s)
-      expect(JSON.parse(response.body)['description'].to_s).to eq(@package1.description.to_s)
-      expect(JSON.parse(response.body)['price'].to_s).to eq(@package1.price.to_s)
-      expect(JSON.parse(response.body)['package_features'].to_s).to eq("")
+      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@package1.id.to_i)
+      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@package1.name.to_s)
+      expect(JSON.parse(response.body)['data']['description'].to_s).to eq(@package1.description.to_s)
+      expect(JSON.parse(response.body)['data']['price'].to_s).to eq(@package1.price.to_s)
+      expect(JSON.parse(response.body)['data']['package_features'].to_s).to eq("")
     end
 
     it "should return the correct data for package2" do
       get :show, { 'id' => @package2.id }
-      expect(JSON.parse(response.body)['id'].to_i).to eq(@package2.id.to_i)
-      expect(JSON.parse(response.body)['name'].to_s).to eq(@package2.name.to_s)
-      expect(JSON.parse(response.body)['description'].to_s).to eq(@package2.description.to_s)
-      expect(JSON.parse(response.body)['price'].to_s).to eq(@package2.price.to_s)
-      expect(JSON.parse(response.body)['package_features'].to_s).to include(@features1.name.to_s)
-      expect(JSON.parse(response.body)['package_features'].to_s).to_not include(@features2.name.to_s)
+      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@package2.id.to_i)
+      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@package2.name.to_s)
+      expect(JSON.parse(response.body)['data']['description'].to_s).to eq(@package2.description.to_s)
+      expect(JSON.parse(response.body)['data']['price'].to_s).to eq(@package2.price.to_s)
+      expect(JSON.parse(response.body)['data']['package_features'].to_s).to include(@features1.name.to_s)
+      expect(JSON.parse(response.body)['data']['package_features'].to_s).to_not include(@features2.name.to_s)
     end
 
     it "should return the correct error if the package id can't be found" do
