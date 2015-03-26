@@ -1,6 +1,6 @@
 class V1::PackagesController < ApplicationController
   respond_to :json
-  before_action :authenticate_user!, :only => [:create, :update], :unless => :master_api_key?
+  before_action :authenticate_user!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create
     package = Package.new(package_params)
@@ -9,6 +9,17 @@ class V1::PackagesController < ApplicationController
       render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => 201
     else
       render :json => { :errors => package.errors.full_messages.to_sentence }, :status => 422
+    end
+  end
+
+  def destroy
+    package = Package.find_by_id(params[:id])
+
+    if package.blank?
+      render :json => { :errors => "The package with id #{params[:id]} could not be found." }, :status => 422
+    else
+      package.destroy
+      render :json => { :data => "The package with id #{params[:id]} has been deleted." }, :status => 202
     end
   end
 
@@ -32,7 +43,7 @@ class V1::PackagesController < ApplicationController
     if package.blank?
       render :json => { :errors => "The package with id #{params[:id]} could not be found." }, :status => 422
     elsif package.update(package_params)
-      render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => 201
+      render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => 204
     else
       render :json => { :errors => package.errors.full_messages.to_sentence }, :status => 422
     end
