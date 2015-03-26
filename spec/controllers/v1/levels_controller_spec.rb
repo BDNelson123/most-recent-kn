@@ -3,6 +3,8 @@ include SpecHelpers
 
 describe V1::LevelsController do
   before(:all) do
+    delete_factories
+
     @level1 = FactoryGirl.create(:level, :name => "Touring Pro", :handicap => "0-5 Handicap", :description => "Scratch Golfer")
     @level2 = FactoryGirl.create(:level, :name => "Varsity", :handicap => "6-10 Handicap", :description => "Plays frequently")
     @level3 = FactoryGirl.create(:level, :name => "Junior Varsity", :handicap => "11-20 Handicap", :description => "Plays frequently during the season")
