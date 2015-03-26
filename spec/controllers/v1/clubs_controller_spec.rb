@@ -18,6 +18,114 @@ describe V1::ClubsController, :type => :api do
   # --------------------------------------------- #
   # --------------------------------------------- #
 
+  # CREATE action tests
+  describe "#create" do
+    context "authentication" do
+      it "should return a response status of 401 if user is not logged in" do
+        post :create, format: :json, :club => {:name => "test"}
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 201 if user is logged in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :club => {:name => "test"}
+        expect(response.status).to eq(201)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "response status" do
+      it "should return a response status of 422 if record is not created" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :club => {:name => nil}
+        expect(response.status).to eq(422)
+      end
+
+      it "should return a response status of 422 if record already exists - validation for unique name" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+
+        club4 = FactoryGirl.create(:club, :name => "test")
+        post :create, format: :json, :club => {:name => "test"}
+        expect(response.status).to eq(422)
+        club4.destroy
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "club record creation" do
+      it "should add new record to db" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :club => {:name => "test"}}.to change(Club, :count).by(1)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - not signed in" do
+        expect {post :create, format: :json, :club => {:name => "test"}}.to change(Club, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - validation fail for name - nil" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :club => {:name => nil}}.to change(Club, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - validation fail for name - not unique" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :club => {:name => "Callaway Golf"}}.to change(Club, :count).by(0)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "returned data" do
+      it "should return the object id and name in the data hash" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :club => {:name => "thisisasuperdupertest"}
+        expect(JSON.parse(response.body)['data'].to_s).to include("\"name\"=>\"thisisasuperdupertest\"")
+      end
+
+      # --------------- #
+
+      it "should return the validation error for name already being taken" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :club => {:name => "Callaway Golf"}
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
+      end
+
+      # --------------- #
+
+      it "should return the validation error for name being null" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :club => {:name => nil}
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
+      end
+    end
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
   # DESTROY action tests
   describe "#destroy" do
     before(:each) do
@@ -170,114 +278,6 @@ describe V1::ClubsController, :type => :api do
       #NOTE: this is due to the user model having a club record
       get :show, { 'id' => @club3.id + 2 }
       expect(response.status).to eq(422)
-    end
-  end
-
-  # --------------------------------------------- #
-  # --------------------------------------------- #
-  # --------------------------------------------- #
-
-  # CREATE action tests
-  describe "#create" do
-    context "authentication" do
-      it "should return a response status of 401 if user is not logged in" do
-        post :create, format: :json, :club => {:name => "test"}
-        expect(response.status).to eq(401)
-      end
-
-      # --------------- #
-
-      it "should return a response status of 201 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        post :create, format: :json, :club => {:name => "test"}
-        expect(response.status).to eq(201)
-      end
-    end
-
-    # ------------------------------ #
-    # ------------------------------ #
-
-    context "response status" do
-      it "should return a response status of 422 if record is not created" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        post :create, format: :json, :club => {:name => nil}
-        expect(response.status).to eq(422)
-      end
-
-      it "should return a response status of 422 if record already exists - validation for unique name" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-
-        club4 = FactoryGirl.create(:club, :name => "test")
-        post :create, format: :json, :club => {:name => "test"}
-        expect(response.status).to eq(422)
-        club4.destroy
-      end
-    end
-
-    # ------------------------------ #
-    # ------------------------------ #
-
-    context "club record creation" do
-      it "should add new record to db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        expect {post :create, format: :json, :club => {:name => "test"}}.to change(Club, :count).by(1)
-      end
-
-      # --------------- #
-
-      it "should not add new record to db - not signed in" do
-        expect {post :create, format: :json, :club => {:name => "test"}}.to change(Club, :count).by(0)
-      end
-
-      # --------------- #
-
-      it "should not add new record to db - validation fail for name - nil" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        expect {post :create, format: :json, :club => {:name => nil}}.to change(Club, :count).by(0)
-      end
-
-      # --------------- #
-
-      it "should not add new record to db - validation fail for name - not unique" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        expect {post :create, format: :json, :club => {:name => "Callaway Golf"}}.to change(Club, :count).by(0)
-      end
-    end
-
-    # ------------------------------ #
-    # ------------------------------ #
-
-    context "returned data" do
-      it "should return the object id and name in the data hash" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        post :create, format: :json, :club => {:name => "thisisasuperdupertest"}
-        expect(JSON.parse(response.body)['data'].to_s).to include("\"name\"=>\"thisisasuperdupertest\"")
-      end
-
-      # --------------- #
-
-      it "should return the validation error for name already being taken" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        post :create, format: :json, :club => {:name => "Callaway Golf"}
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
-      end
-
-      # --------------- #
-
-      it "should return the validation error for name being null" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        post :create, format: :json, :club => {:name => nil}
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
-      end
     end
   end
 
