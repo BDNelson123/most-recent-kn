@@ -43,7 +43,7 @@ class V1::PackagesController < ApplicationController
     if package.blank?
       render :json => { :errors => "The package with id #{params[:id]} could not be found." }, :status => 422
     elsif package.update(package_params)
-      render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => 204
+      render :json => { :data => Package.joins(:features).feature_attributes.find_by_id(package.id) }, :status => 200
     else
       render :json => { :errors => package.errors.full_messages.to_sentence }, :status => 422
     end
