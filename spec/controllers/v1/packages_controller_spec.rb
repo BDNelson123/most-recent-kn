@@ -355,7 +355,7 @@ describe V1::PackagesController do
     # ------------------------------ #
     # ------------------------------ #
 
-    it "should return 1 record" do
+    it "should return 1 record with 6 fields" do
       get :show, { 'id' => @package1.id }
       expect(JSON.parse(response.body)['data'].length).to eq(6) # 6 fields for one record (id, name, description, features, price, credits)
     end
@@ -389,13 +389,6 @@ describe V1::PackagesController do
       get :show, { 'id' => @package3.id + 1 }
       expect(JSON.parse(response.body)['errors'].to_s).to eq("The package with id #{@package3.id + 1} could not be found.")
     end
-
-    # --------------- #
-
-    it "should return the correct status if the package id can't be found" do
-      get :show, { 'id' => @package3.id + 1 }
-      expect(response.status).to eq(422)
-    end
   end
 
   # --------------------------------------------- #
@@ -411,7 +404,7 @@ describe V1::PackagesController do
         put :update, 
           format: :json, 
           :id => package4.id, 
-          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :features => [Feature.find_by_id(@features1.id),Feature.find_by_id(@features2.id)]}
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{"feature_id" => @features1.id},{"feature_id" => @features2.id}]}
         expect(response.status).to eq(401)
 
         package4.destroy
@@ -419,7 +412,7 @@ describe V1::PackagesController do
 
       # --------------- #
 
-      it "should return a status of 204 if user is logged in" do
+      it "should return a status of 200 if user is logged in" do
         sign_in @user
         request.headers.merge!(@user.create_new_auth_token)
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
@@ -427,8 +420,8 @@ describe V1::PackagesController do
         put :update, 
           format: :json, 
           :id => package4.id, 
-          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :features => [Feature.find_by_id(@features1.id),Feature.find_by_id(@features2.id)]}
-        expect(response.status).to eq(204)
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{"feature_id" => @features1.id},{"feature_id" => @features2.id}]}
+        expect(response.status).to eq(200)
 
         package4.destroy
       end
@@ -442,8 +435,37 @@ describe V1::PackagesController do
         put :update, 
           format: :json, 
           :id => @package3.id + 1, 
-          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :features => [Feature.find_by_id(@features1.id),Feature.find_by_id(@features2.id)]}
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{"feature_id" => @features1.id},{"feature_id" => @features2.id}]}
         expect(response.status).to eq(422)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "featurization record creation / deletion" do
+      it "should add one record to featurization db" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        expect {put :update, format: :json, :id => package4.id, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, 
+          :featurizations_attributes => [{"feature_id" => @features1.id},{"feature_id" => @features2.id}]}}.to change(Featurization, :count).by(1)
+
+        package4.destroy
+      end
+
+      # --------------- #
+
+      it "should add two records to featurization db" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        expect {put :update, format: :json, :id => package4.id, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, 
+          :featurizations_attributes => [{"feature_id" => @features1.id},{"feature_id" => @features2.id},{"feature_id" => @features3.id}]}}.to change(Featurization, :count).by(2)
+
+        package4.destroy
       end
     end
 
@@ -459,7 +481,7 @@ describe V1::PackagesController do
         put :update, 
           format: :json, 
           :id => package4.id, 
-          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :features => [Feature.find_by_id(@features1.id),Feature.find_by_id(@features2.id)]}
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{"feature_id" => @features1.id},{"feature_id" => @features2.id}]}
         expect(JSON.parse(response.body)['data'].length).to eq(6)
 
         package4.destroy
