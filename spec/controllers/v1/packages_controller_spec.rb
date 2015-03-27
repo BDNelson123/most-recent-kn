@@ -4,13 +4,13 @@ include SpecHelpers
 
 describe V1::PackagesController do
   before(:all) do
-    @features1 = FactoryGirl.create(:feature, :name => "2 free premium club set rentals")
-    @features2 = FactoryGirl.create(:feature, :name => "5 free premium club set rentals")
-    @features3 = FactoryGirl.create(:feature, :name => "10% off food and beverage")
+    @features1 = FactoryGirl.create(:feature)
+    @features2 = FactoryGirl.create(:feature)
+    @features3 = FactoryGirl.create(:feature)
 
-    @package1 = FactoryGirl.create(:package, :name => "Bronze", :description => "FlyingTee Membership card", :credits => 20, :price => "22.0")
-    @package2 = FactoryGirl.create(:package, :name => "Silver", :description => "FlyingTee Membership card", :credits => 60, :price => "50.0", :features => [Feature.find_by_id(@features1.id)])
-    @package3 = FactoryGirl.create(:package, :name => "Gold", :description => "FlyingTee Membership card", :credits => 120, :price => "100.0", :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
+    @package1 = FactoryGirl.create(:package)
+    @package2 = FactoryGirl.create(:package, :features => [Feature.find_by_id(@features1.id)])
+    @package3 = FactoryGirl.create(:package, :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
 
     create_user
   end
@@ -329,10 +329,10 @@ describe V1::PackagesController do
       expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@package1.name.to_s)
       expect(JSON.parse(response.body)['data'][0]['package_features'].to_s).to eq("")
       expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@package2.name.to_s)
-      expect(JSON.parse(response.body)['data'][1]['package_features'].to_s).to include("2 free premium club set rentals")
+      expect(JSON.parse(response.body)['data'][1]['package_features'].to_s).to include(@features1.name.to_s)
       expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@package3.name.to_s)
-      expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include("5 free premium club set rentals")
-      expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include("10% off food and beverage")
+      expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include(@features2.name.to_s)
+      expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include(@features3.name.to_s)
     end
   end
 
@@ -498,9 +498,9 @@ describe V1::PackagesController do
           format: :json, 
           :id => package4.id, 
           :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id}, {:feature_id => @features3.id}]}
-        expect(JSON.parse(response.body)['data']['package_features'].to_s).to include("5 free premium club set rentals")
-        expect(JSON.parse(response.body)['data']['package_features'].to_s).to include("10% off food and beverage")
-        expect(JSON.parse(response.body)['data']['package_features'].to_s).to_not include("2 free premium club set rentals")
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to include(@features2.name.to_s)
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to include(@features3.name.to_s)
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to_not include(@features1.name.to_s)
 
         package4.destroy
       end
