@@ -3,9 +3,10 @@ require 'faker'
 
 FactoryGirl.define do
   factory :package do
-    name "Bronze"
-    description "FlyingTee Membership card"
-    price "22.0"
-    credits 20
+    name { Faker::Name.first_name }
+    description { Faker::Company.catch_phrase }
+    price { Faker::Commerce.price }
+    credits { Faker::Number.digit }
+    features []
   end
 end

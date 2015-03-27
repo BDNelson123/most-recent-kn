@@ -3,11 +3,11 @@ require 'faker'
 
 FactoryGirl.define do
   factory :course do
-    name "Cameron Park Country Club"
-    address "3201 Royal Dr."
-    address2 nil
-    city "Cameron Park"
-    state "CA"
-    zip "95682"
+    name { Faker::Company.name }
+    address { Faker::Address.street_address }
+    address2 { Faker::Address.secondary_address }
+    city { Faker::Address.city }
+    state { Faker::Address.state_abbr }
+    zip { Faker::Address.zip }
   end
 end

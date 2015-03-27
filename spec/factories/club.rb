@@ -3,6 +3,6 @@ require 'faker'
 
 FactoryGirl.define do
   factory :club do
-    name "Callaway Golf"
+    name { Faker::Company.name }
   end
 end

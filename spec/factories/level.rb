@@ -3,8 +3,8 @@ require 'faker'
 
 FactoryGirl.define do
   factory :level do
-    name "Touring Pro"
-    description "Scratch Golfer"
-    handicap 0
+    name { Faker::Company.bs }
+    description { Faker::Company.catch_phrase }
+    handicap { Faker::Company.catch_phrase }
   end
 end
