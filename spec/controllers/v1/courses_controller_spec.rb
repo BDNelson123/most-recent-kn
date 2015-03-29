@@ -1,15 +1,193 @@
 require 'spec_helper'
+include Devise::TestHelpers
 include SpecHelpers
 
 describe V1::CoursesController, :type => :api do
   before(:all) do
-    @course1 = FactoryGirl.create(:course, :name => "Cameron Park Country Club")
-    @course2 = FactoryGirl.create(:course, :name => "La Quinta Country Club", :address => "77-750 50th Ave", :address2 => "", :city => "La Quinta", :state => "CA", :zip => "92253")
-    @course3 = FactoryGirl.create(:course, :name => "Ponderosa Golf Course", :address => "10040 Reynolds Way", :address2 => "", :city => "Truckee", :state => "CA", :zip => "96160")
+    # have to give names here due to index action being sorted by name
+    @course1 = FactoryGirl.create(:course, :name => "Cameron Park Country Course")
+    @course2 = FactoryGirl.create(:course, :name => "La Quinta Country Course")
+    @course3 = FactoryGirl.create(:course, :name => "Ponderosa Golf Course")
+    create_user
   end
 
   after(:all) do
     delete_factories
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
+  # CREATE action tests
+  describe "#create" do
+    context "authentication" do
+      it "should return a response status of 401 if user is not logged in" do
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 201 if user is logged in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}
+        expect(response.status).to eq(201)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "response status" do
+      it "should return a response status of 422 if record is not created - no name" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => nil, :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}
+        expect(response.status).to eq(422)
+      end
+
+      it "should return a response status of 422 if record is not created - no address" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => nil, :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}
+        expect(response.status).to eq(422)
+      end
+
+      it "should return a response status of 422 if record is not created - no city" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => nil, :state => "test state", :zip => 11111}
+        expect(response.status).to eq(422)
+      end
+
+      it "should return a response status of 422 if record is not created - no state" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => nil, :zip => 11111}
+        expect(response.status).to eq(422)
+      end
+
+      it "should return a response status of 422 if record is not created - no zip" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test city", :zip => nil}
+        expect(response.status).to eq(422)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "course record creation" do
+      it "should add new record to db - signed in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}}.to change(Course, :count).by(1)
+      end
+
+      it "should change db count by 0 - user not signed in" do
+        expect {post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}}.to change(Course, :count).by(0)
+      end
+
+      it "should change db count by 0 - no name" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :course => {:name => nil, :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}}.to change(Course, :count).by(0)
+      end
+
+      it "should change db count by 0 - no address" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :course => {:name => "test name", :address => nil, :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}}.to change(Course, :count).by(0)
+      end
+
+      it "should change db count by 0 - no city" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => nil, :state => "test state", :zip => 11111}}.to change(Course, :count).by(0)
+      end
+
+      it "should change db count by 0 - no state" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => nil, :zip => 11111}}.to change(Course, :count).by(0)
+      end
+
+      it "should change db count by 0 - no zip" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test city", :zip => nil}}.to change(Course, :count).by(0)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "returned data" do
+      it "should return the object id and name in the data hash" do
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
+
+      it "should return the validation error for authentication" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}
+        expect(JSON.parse(response.body)['data'].to_s).to include("\"name\"=>\"test name\"")
+        expect(JSON.parse(response.body)['data'].to_s).to include("\"address\"=>\"test address\"")
+        expect(JSON.parse(response.body)['data'].to_s).to include("\"address2\"=>\"test address2\"")
+        expect(JSON.parse(response.body)['data'].to_s).to include("\"city\"=>\"test city\"")
+        expect(JSON.parse(response.body)['data'].to_s).to include("\"state\"=>\"test state\"")
+        expect(JSON.parse(response.body)['data'].to_s).to include("\"zip\"=>11111")
+      end
+
+      # --------------- #
+
+      it "should return the validation error for name being null" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => nil, :address => "test address", :address2 => "test address2", :city => "test city", :state => "test city", :zip => 11111}
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
+      end
+
+      # --------------- #
+
+      it "should return the validation error for address being null" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => nil, :address2 => "test address2", :city => "test city", :state => "test city", :zip => 11111}
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Address can't be blank")
+      end
+
+      # --------------- #
+
+      it "should return the validation error for city being null" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => nil, :state => "test city", :zip => 11111}
+        expect(JSON.parse(response.body)['errors'].to_s).to include("City can't be blank")
+      end
+
+      # --------------- #
+
+      it "should return the validation error for state being null" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => nil, :zip => 11111}
+        expect(JSON.parse(response.body)['errors'].to_s).to include("State can't be blank")
+      end
+
+      # --------------- #
+
+      it "should return the validation error for zip being null" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        post :create, format: :json, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test city", :zip => nil}
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Zip can't be blank")
+      end
+    end
   end
 
   # INDEX action tests
@@ -19,10 +197,14 @@ describe V1::CoursesController, :type => :api do
       expect(response.status).to eq(200)
     end
 
+    # --------------- #
+
     it "should return 3 total rows" do
       get :index
       expect(JSON.parse(response.body)['data'].length).to eq(3)
     end
+
+    # --------------- #
 
     # NOTE: index controller orders by name desc
     it "should return the correct values" do
@@ -32,6 +214,91 @@ describe V1::CoursesController, :type => :api do
       expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@course3.name.to_s)
     end
   end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
+  # DESTROY action tests
+  describe "#destroy" do
+    before(:each) do
+      @course4 = FactoryGirl.create(:course)
+    end
+
+    after(:each) do
+      @course4.destroy
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "authentication & response status" do
+      it "should return a response status of 401 if user is not logged in" do
+        delete :destroy, format: :json, :id => @course4.id 
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 202 if user is logged in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        delete :destroy, format: :json, :id => @course4.id 
+        expect(response.status).to eq(202)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "course record deletion" do
+      it "should add new record to db" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {delete :destroy, format: :json, :id => @course4.id}.to change(Course, :count).by(-1)
+      end
+
+      # --------------- #
+
+      it "should not delete record from db - not signed in" do
+        expect {delete :destroy, format: :json, :id => @course4.id}.to change(Course, :count).by(0)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "correct response body" do
+      it "should send back validation that user is not authorized - not logged in" do
+        delete :destroy, format: :json, :id => @course4.id 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that record has been deleted" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+
+        delete :destroy, format: :json, :id => @course4.id 
+        expect(JSON.parse(response.body)['data'].to_s).to include("The course with id #{@course4.id} has been deleted.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that record has NOT been deleted" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+
+        delete :destroy, format: :json, :id => @course4.id + 1 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("The course with id #{@course4.id + 1} could not be found.")
+      end
+    end
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
 
   # SHOW action tests
   describe "#show" do
@@ -75,6 +342,221 @@ describe V1::CoursesController, :type => :api do
     it "should return the correct status if the course id can't be found" do
       get :show, { 'id' => @course3.id + 1 }
       expect(response.status).to eq(422)
+    end
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
+  # UPDATE action tests
+  describe "#update" do
+    context "response status" do
+      context "authentication" do
+        it "should return a status of 422 if user is not logged in" do
+          course4 = FactoryGirl.create(:course, :name => "Cleveland Golf")
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+          expect(response.status).to eq(401)
+          course4.destroy
+        end
+
+        # --------------- #
+
+        it "should return a status of 200 if user is logged in" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          course4 = FactoryGirl.create(:course, :name => "Cleveland Golf")
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+          expect(response.status).to eq(200)
+          course4.destroy
+        end
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "no record" do
+      it "should return a status of 422 if record cant be found" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+
+        #NOTE: this is due to the user model having a course record (must add 2 - not 1)
+        put :update, format: :json, :id => @course3.id + 2, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+        expect(response.status).to eq(422)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "validations" do
+      it "should return a status of 422 if course name is blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        course4 = FactoryGirl.create(:course)
+        put :update, format: :json, :id => course4.id, :course => {:name => nil, :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+        expect(response.status).to eq(422)
+        course4.destroy
+      end
+
+      it "should return a status of 422 if course address is blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        course4 = FactoryGirl.create(:course)
+        put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => nil, :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+        expect(response.status).to eq(422)
+        course4.destroy
+      end
+
+      it "should return a status of 422 if course city is blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        course4 = FactoryGirl.create(:course)
+        put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => nil, :state => "test state", :zip => 78749}
+        expect(response.status).to eq(422)
+        course4.destroy
+      end
+
+      it "should return a status of 422 if course state is blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        course4 = FactoryGirl.create(:course)
+        put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => nil, :zip => 78749}
+        expect(response.status).to eq(422)
+        course4.destroy
+      end
+
+      it "should return a status of 422 if course zip is blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        course4 = FactoryGirl.create(:course)
+        put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => nil}
+        expect(response.status).to eq(422)
+        course4.destroy
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "response data" do
+      context "no record" do
+        it "should return the correct error response if the course id can't be found" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          #NOTE: this is due to the user model having a course record
+          put :update, format: :json, :id => @course3.id + 2, :course => {:name => "test"}
+          expect(JSON.parse(response.body)['errors'].to_s).to eq("The course with id #{@course3.id + 2} could not be found.")
+        end
+      end
+
+      # ------------------------------ #
+      # ------------------------------ #
+
+      context "authentication" do
+        it "should return - Authorized users only. - if user is not logged in" do
+          course4 = FactoryGirl.create(:course, :name => "Cleveland Golf")
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+          course4.destroy
+        end
+
+        # --------------- #
+
+        it "should return data of the updated course if no validation errors and user logged in" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          course4 = FactoryGirl.create(:course, :name => "Cleveland Golf")
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+          expect(JSON.parse(response.body)['data']['name'].to_s).to eq("test name")
+          expect(JSON.parse(response.body)['data']['id'].to_s).to eq("#{course4.id}")
+          course4.destroy
+        end
+      end
+
+      # ------------------------------ #
+      # ------------------------------ #
+
+      context "messages" do
+        it "should return Name Can't be blank if name is blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          course4 = FactoryGirl.create(:course)
+          put :update, format: :json, :id => course4.id, :course => {:name => nil, :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
+          course4.destroy
+        end
+
+        # --------------- #
+
+        it "should return Address Can't be blank if name is blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          course4 = FactoryGirl.create(:course)
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => nil, :address2 => "test address2", :city => "test city", :state => "test state", :zip => 78749}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Address can't be blank")
+          course4.destroy
+        end
+
+        # --------------- #
+
+        it "should return City Can't be blank if name is blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          course4 = FactoryGirl.create(:course)
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => nil, :state => "test state", :zip => 78749}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("City can't be blank")
+          course4.destroy
+        end
+
+        # --------------- #
+
+        it "should return State Can't be blank if name is blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          course4 = FactoryGirl.create(:course)
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => nil, :zip => 78749}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("State can't be blank")
+          course4.destroy
+        end
+
+        # --------------- #
+
+        it "should return Zip Can't be blank if name is blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          course4 = FactoryGirl.create(:course)
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => nil}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Zip can't be blank")
+          course4.destroy
+        end
+
+        # --------------- #
+
+        it "should return Zip Can't be blank if name is blank and Address Can't be Blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          course4 = FactoryGirl.create(:course)
+          put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => nil, :address2 => "test address2", :city => "test city", :state => "test state", :zip => nil}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Zip can't be blank")
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Address can't be blank")
+          course4.destroy
+        end
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "db creation" do
+      it "should not create or delete a record from the db when updating" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        course4 = FactoryGirl.create(:course, :name => "Cleveland Golf")
+        expect {put :update, format: :json, :id => course4.id, :course => {:name => "test name", :address => "test address", :address2 => "test address2", :city => "test city", :state => "test state", :zip => 11111}}.to change(Course, :count).by(0)
+        course4.destroy
+      end
     end
   end
 end
