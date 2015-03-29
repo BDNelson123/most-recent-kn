@@ -224,9 +224,10 @@ describe V1::ClubsController, :type => :api do
     # NOTE: index controller orders by name desc
     it "should return the correct values" do
       get :index
-      expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@club2.name.to_s)
-      expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@club3.name.to_s)
-      expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@club1.name.to_s)
+      expect(JSON.parse(response.body)['data'].to_s).to include(@club.name.to_s)
+      expect(JSON.parse(response.body)['data'].to_s).to include(@club1.name.to_s)
+      expect(JSON.parse(response.body)['data'].to_s).to include(@club2.name.to_s)
+      expect(JSON.parse(response.body)['data'].to_s).to include(@club3.name.to_s)
     end
   end
 
