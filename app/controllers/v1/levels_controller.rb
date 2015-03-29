@@ -12,6 +12,17 @@ class V1::LevelsController < ApplicationController
     end
   end
 
+  def destroy
+    level = Level.find_by_id(params[:id])
+
+    if level.blank?
+      render :json => { :errors => "The level with id #{params[:id]} could not be found." }, :status => 422
+    else
+      level.destroy
+      render :json => { :data => "The level with id #{params[:id]} has been deleted." }, :status => 202
+    end
+  end
+
   def index
     render :json => { :data => Level.common_attributes.all.order(:id => "DESC") }, :status => 200
   end
@@ -23,6 +34,18 @@ class V1::LevelsController < ApplicationController
       render :json => { :data => level }, :status => 200
     else
       render :json => { :errors => "The level with id #{params[:id]} could not be found." }, :status => 422
+    end
+  end
+
+  def update
+    level = Level.find_by_id(params[:id])
+
+    if level.blank?
+      render :json => { :errors => "The level with id #{params[:id]} could not be found." }, :status => 422
+    elsif level.update(level_params)
+      render :json => { :data => Level.common_attributes.find_by_id(level.id) }, :status => 200
+    else
+      render :json => { :errors => level.errors.full_messages.to_sentence }, :status => 422
     end
   end
 

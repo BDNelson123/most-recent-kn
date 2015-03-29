@@ -188,6 +188,87 @@ describe V1::LevelsController do
   # --------------------------------------------- #
   # --------------------------------------------- #
 
+  # DESTROY action tests
+  describe "#destroy" do
+    before(:each) do
+      @level6 = FactoryGirl.create(:level)
+    end
+
+    after(:each) do
+      @level6.destroy
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "authentication & response status" do
+      it "should return a response status of 401 if user is not logged in" do
+        delete :destroy, format: :json, :id => @level6.id 
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 202 if user is logged in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        delete :destroy, format: :json, :id => @level6.id 
+        expect(response.status).to eq(202)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "level record deletion" do
+      it "should add new record to db" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        expect {delete :destroy, format: :json, :id => @level6.id}.to change(Level, :count).by(-1)
+      end
+
+      # --------------- #
+
+      it "should not delete record from db - not signed in" do
+        expect {delete :destroy, format: :json, :id => @level6.id}.to change(Level, :count).by(0)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "correct response body" do
+      it "should send back validation that user is not authorized - not logged in" do
+        delete :destroy, format: :json, :id => @level6.id 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that record has been deleted" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+
+        delete :destroy, format: :json, :id => @level6.id 
+        expect(JSON.parse(response.body)['data'].to_s).to include("The level with id #{@level6.id} has been deleted.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that record has been deleted" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+
+        delete :destroy, format: :json, :id => @level6.id + 1 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("The level with id #{@level6.id + 1} could not be found.")
+      end
+    end
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
   # INDEX action tests
   describe "#index" do
     it "should return a response of 200" do
@@ -272,18 +353,196 @@ describe V1::LevelsController do
 
     it "should return the correct error if the level id can't be found" do
       #NOTE: + 2 comes from user model needing to create a level
-      level4 = Level.last
-      get :show, { 'id' => level4.id + 2 }
-      expect(JSON.parse(response.body)['errors'].to_s).to eq("The level with id #{level4.id + 2} could not be found.")
+      level6 = Level.last
+      get :show, { 'id' => level6.id + 2 }
+      expect(JSON.parse(response.body)['errors'].to_s).to eq("The level with id #{level6.id + 2} could not be found.")
     end
 
     # --------------- #
 
     it "should return the correct status if the level id can't be found" do
       #NOTE: + 2 comes from user model needing to create a level
-      level4 = Level.last
-      get :show, { 'id' => level4.id + 2 }
+      level6 = Level.last
+      get :show, { 'id' => level6.id + 2 }
       expect(response.status).to eq(422)
+    end
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
+  # UPDATE action tests
+  describe "#update" do
+    context "response status" do
+      context "authentication" do
+        it "should return a status of 422 if user is not logged in" do
+          level6 = FactoryGirl.create(:level, :name => "test name", :description => "test description", :handicap => "test handicap")
+          put :update, format: :json, :id => level6.id, :level => {:name => "test update name", :description => "test update description", :handicap => "test update handicap"}
+          expect(response.status).to eq(401)
+          level6.destroy
+        end
+
+        # --------------- #
+
+        it "should return a status of 200 if user is logged in" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          level6 = FactoryGirl.create(:level, :name => "test name", :description => "test description", :handicap => "test handicap")
+          put :update, format: :json, :id => level6.id, :level => {:name => "test update name", :description => "test update description", :handicap => "test update handicap"}
+          expect(response.status).to eq(200)
+          level6.destroy
+        end
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "no record" do
+      it "should return a status of 422 if record cant be found" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+
+        #NOTE: this is due to the user model having a level record (must add 2 - not 1)
+        put :update, format: :json, :id => @level5.id + 2, :level => {:name => "test update name", :description => "test update description", :handicap => "test update handicap"}
+        expect(response.status).to eq(422)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "validations" do
+      it "should return a status of 422 if level name has already been taken" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        level6 = FactoryGirl.create(:level)
+        put :update, format: :json, :id => level6.id, :level => {:name => @level5.name.to_s}
+        expect(response.status).to eq(422)
+        level6.destroy
+      end
+
+      # --------------- #
+
+      it "should return a status of 422 if level name is blank" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        level6 = FactoryGirl.create(:level, :name => "test name", :description => "test description", :handicap => "test handicap")
+        put :update, format: :json, :id => level6.id, :level => {:name => ""}
+        expect(response.status).to eq(422)
+        level6.destroy
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "response data" do
+      context "no record" do
+        it "should return the correct error response if the level id can't be found" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          #NOTE: this is due to the user model having a level record
+          put :update, format: :json, :id => @level5.id + 2, :level => {:name => "test"}
+          expect(JSON.parse(response.body)['errors'].to_s).to eq("The level with id #{@level5.id + 2} could not be found.")
+        end
+      end
+
+      # ------------------------------ #
+      # ------------------------------ #
+
+      context "authentication" do
+        it "should return - Authorized users only. - if user is not logged in" do
+          level6 = FactoryGirl.create(:level, :name => "test name", :description => "test description", :handicap => "test handicap")
+          put :update, format: :json, :id => level6.id, :level => {:name => "test"}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+          level6.destroy
+        end
+
+        # --------------- #
+
+        it "should return data of the updated level if no validation errors and user logged in" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          level6 = FactoryGirl.create(:level, :name => "test name", :description => "test description", :handicap => "test handicap")
+          put :update, format: :json, :id => level6.id, :level => {:name => "test"}
+          expect(JSON.parse(response.body)['data']['name'].to_s).to eq("test")
+          expect(JSON.parse(response.body)['data']['id'].to_s).to eq("#{level6.id}")
+          level6.destroy
+        end
+      end
+
+      # ------------------------------ #
+      # ------------------------------ #
+
+      context "messages" do
+        it "should return Name Can't be blank if name is blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          level6 = FactoryGirl.create(:level)
+          put :update, format: :json, :id => level6.id, :level => {:name => "", :description => "test 2 description", :handicap => "test 2 handicap"}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
+          level6.destroy
+        end
+
+        # --------------- #
+
+        it "should return Description Can't be blank if name is blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          level6 = FactoryGirl.create(:level)
+          put :update, format: :json, :id => level6.id, :level => {:name => "test 2 name", :description => "", :handicap => "test 2 handicap"}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Description can't be blank")
+          level6.destroy
+        end
+
+        # --------------- #
+
+        it "should return Handicap Can't be blank if name is blank" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          level6 = FactoryGirl.create(:level)
+          put :update, format: :json, :id => level6.id, :level => {:name => "test 2 name", :description => "test 2 description", :handicap => ""}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Handicap can't be blank")
+          level6.destroy
+        end
+
+        # --------------- #
+
+        it "should return Name is already taken if name has already been taken" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          level6 = FactoryGirl.create(:level)
+          put :update, format: :json, :id => level6.id, :level => {:name => @level3.name.to_s, :description => "test description", :handicap => "test handicap"}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
+          level6.destroy
+        end
+
+        # --------------- #
+
+        it "should return no validation error for name already being taken" do
+          sign_in @user
+          request.headers.merge!(@user.create_new_auth_token)
+          level6 = FactoryGirl.create(:level)
+          put :update, format: :json, :id => level6.id, :level => {:name => level6.name.to_s, :description => "test description", :handicap => "test handicap"}
+          expect(JSON.parse(response.body)['errors'].to_s).to_not include("Name has already been taken")
+          level6.destroy
+        end
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "db creation" do
+      it "should not create or delete a record from the db when updating" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+        level6 = FactoryGirl.create(:level)
+        expect {put :update, format: :json, :id => level6.id, :level => {:name => "test 2 name", :description => "test 2 description", :handicap => "test 2 handicap"}}.to change(Level, :count).by(0)
+        level6.destroy
+      end
     end
   end
 end
