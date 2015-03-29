@@ -4,9 +4,9 @@ include SpecHelpers
 
 describe V1::ClubsController, :type => :api do
   before(:all) do
-    @club1 = FactoryGirl.create(:club, :name => "Callaway Golf")
-    @club2 = FactoryGirl.create(:club, :name => "Ben Hogan")
-    @club3 = FactoryGirl.create(:club, :name => "Bridgestone")
+    @club1 = FactoryGirl.create(:club)
+    @club2 = FactoryGirl.create(:club)
+    @club3 = FactoryGirl.create(:club)
     create_user
   end
 
@@ -87,7 +87,7 @@ describe V1::ClubsController, :type => :api do
       it "should not add new record to db - validation fail for name - not unique" do
         sign_in @user
         request.headers.merge!(@user.create_new_auth_token)
-        expect {post :create, format: :json, :club => {:name => "Callaway Golf"}}.to change(Club, :count).by(0)
+        expect {post :create, format: :json, :club => {:name => @club1.name.to_s}}.to change(Club, :count).by(0)
       end
     end
 
@@ -107,7 +107,7 @@ describe V1::ClubsController, :type => :api do
       it "should return the validation error for name already being taken" do
         sign_in @user
         request.headers.merge!(@user.create_new_auth_token)
-        post :create, format: :json, :club => {:name => "Callaway Golf"}
+        post :create, format: :json, :club => {:name => @club1.name.to_s}
         expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
       end
 
@@ -181,6 +181,8 @@ describe V1::ClubsController, :type => :api do
         expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
       end
 
+      # --------------- #
+
       it "should send back validation that record has been deleted" do
         sign_in @user
         request.headers.merge!(@user.create_new_auth_token)
@@ -188,6 +190,8 @@ describe V1::ClubsController, :type => :api do
         delete :destroy, format: :json, :id => @club4.id 
         expect(JSON.parse(response.body)['data'].to_s).to include("The club with id #{@club4.id} has been deleted.")
       end
+
+      # --------------- #
 
       it "should send back validation that record has been deleted" do
         sign_in @user
@@ -332,7 +336,7 @@ describe V1::ClubsController, :type => :api do
         sign_in @user
         request.headers.merge!(@user.create_new_auth_token)
         club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
-        put :update, format: :json, :id => club4.id, :club => {:name => "Callaway Golf"}
+        put :update, format: :json, :id => club4.id, :club => {:name => @club1.name.to_s}
         expect(response.status).to eq(422)
         club4.destroy
       end
@@ -406,7 +410,7 @@ describe V1::ClubsController, :type => :api do
           sign_in @user
           request.headers.merge!(@user.create_new_auth_token)
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
-          put :update, format: :json, :id => club4.id, :club => {:name => "Callaway Golf"}
+          put :update, format: :json, :id => club4.id, :club => {:name => @club1.name.to_s}
           expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
           club4.destroy
         end
