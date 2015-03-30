@@ -206,12 +206,109 @@ describe V1::CoursesController, :type => :api do
 
     # --------------- #
 
-    # NOTE: index controller orders by name desc
     it "should return the correct values" do
       get :index
       expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@course1.name.to_s)
       expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@course2.name.to_s)
       expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@course3.name.to_s)
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    #NOTE: there are 29 results - 26 from alphabet and 3 from before_all
+    context "pagination" do
+      context "page" do
+        before(:all) do
+          ("a".."z").each do |u|
+            FactoryGirl.create(:course, :name => u)
+          end
+        end
+
+        after(:all) do
+          ("a".."z").each do |u|
+            Course.where(:name => u).destroy_all
+          end
+        end
+
+        # ------------------------------ #
+        # ------------------------------ #
+
+        context "results length" do
+          it "should return 15 results for the first page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 1
+            expect(JSON.parse(response.body)['data'].length).to eq(15)
+          end
+
+          # --------------- #
+
+          it "should return 6 results for the second page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 2
+            expect(JSON.parse(response.body)['data'].length).to eq(14)
+          end
+
+          # --------------- #
+
+          it "should return 0 results for the third page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 3
+            expect(JSON.parse(response.body)['data'].length).to eq(0)
+          end
+
+          # --------------- #
+
+          it "should return 10 results for the first page with per_page param" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :per_page => 10
+            expect(JSON.parse(response.body)['data'].length).to eq(10)
+          end
+
+          # --------------- #
+
+          it "should return 10 results for the third page with per_page param" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :per_page => 10, :page => 3
+            expect(JSON.parse(response.body)['data'].length).to eq(9)
+          end
+        end
+
+        # ------------------------------ #
+        # ------------------------------ #
+
+        context "order by" do
+          context "name" do
+            it "should return user with name of 'a' for first result when ordering by name asc" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :order_by => "name", :order_direction => "ASC"
+              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("a")
+            end
+
+            # --------------- #
+
+            it "should return user with name of 'z' for first result when ordering by name desc" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :order_by => "name", :order_direction => "DESC"
+              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("z")
+            end
+          end
+        end
+      end
     end
   end
 

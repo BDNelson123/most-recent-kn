@@ -3,7 +3,7 @@ require 'faker'
 
 FactoryGirl.define do
   factory :income do
-    name "Under $20,000"
+    name { Faker::Company.catch_phrase }
     description nil
   end
 end

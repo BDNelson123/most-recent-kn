@@ -233,6 +233,104 @@ describe V1::ClubsController, :type => :api do
       expect(JSON.parse(response.body)['data'].to_s).to include(@club2.name.to_s)
       expect(JSON.parse(response.body)['data'].to_s).to include(@club3.name.to_s)
     end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    #NOTE: there are 30 results - 26 from alphabet, 3 from before_all and 1 from create_user
+    context "pagination" do
+      context "page" do
+        before(:all) do
+          ("a".."z").each do |u|
+            FactoryGirl.create(:club, :name => u)
+          end
+        end
+
+        after(:all) do
+          ("a".."z").each do |u|
+            Club.where(:name => u).destroy_all
+          end
+        end
+
+        # ------------------------------ #
+        # ------------------------------ #
+
+        context "results length" do
+          it "should return 15 results for the first page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 1
+            expect(JSON.parse(response.body)['data'].length).to eq(15)
+          end
+
+          # --------------- #
+
+          it "should return 6 results for the second page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 2
+            expect(JSON.parse(response.body)['data'].length).to eq(15)
+          end
+
+          # --------------- #
+
+          it "should return 0 results for the third page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 3
+            expect(JSON.parse(response.body)['data'].length).to eq(0)
+          end
+
+          # --------------- #
+
+          it "should return 10 results for the first page with per_page param" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :per_page => 10
+            expect(JSON.parse(response.body)['data'].length).to eq(10)
+          end
+
+          # --------------- #
+
+          it "should return 10 results for the third page with per_page param" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :per_page => 10, :page => 3
+            expect(JSON.parse(response.body)['data'].length).to eq(10)
+          end
+        end
+
+        # ------------------------------ #
+        # ------------------------------ #
+
+        context "order by" do
+          context "name" do
+            it "should return user with name of 'a' for first result when ordering by name asc" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :order_by => "name", :order_direction => "ASC"
+              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("a")
+            end
+
+            # --------------- #
+
+            it "should return user with name of 'z' for first result when ordering by name desc" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :order_by => "name", :order_direction => "DESC"
+              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("z")
+            end
+          end
+        end
+      end
+    end
   end
 
   # --------------------------------------------- #

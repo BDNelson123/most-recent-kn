@@ -1,5 +1,6 @@
 class V1::PackagesController < ApplicationController
   respond_to :json
+  before_filter :set_params, :only => [:index]
   before_action :authenticate_user!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create
@@ -24,7 +25,7 @@ class V1::PackagesController < ApplicationController
   end
 
   def index
-    render :json => { :data => Package.feature_join.feature_attributes.group("packages.id").all }, :status => 200
+    render :json => { :data => Package.feature_join.paginate(:page => params[:page], :per_page => params[:per_page]).feature_attributes.group("packages.id").all.order(params[:order_by] => params[:order_direction]) }, :status => 200
   end
 
   def show

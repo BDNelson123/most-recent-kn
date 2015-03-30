@@ -1,5 +1,6 @@
 class V1::ClubsController < ApplicationController
   respond_to :json
+  before_filter :set_params, :only => [:index]
   before_action :authenticate_user!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create
@@ -24,7 +25,7 @@ class V1::ClubsController < ApplicationController
   end
 
   def index
-    render :json => { :data => Club.common_attributes.all.order(:name => "ASC") }, :status => 200
+    render :json => { :data => Club.paginate(:page => params[:page], :per_page => params[:per_page]).common_attributes.all.order(params[:order_by] => params[:order_direction]) }, :status => 200
   end
 
   def show

@@ -2,7 +2,7 @@ require 'spec_helper'
 include Devise::TestHelpers
 include SpecHelpers
 
-describe V1::LevelsController do
+describe V1::LevelsController, :type => :api do
   before(:all) do
     delete_factories
     create_user # move create_user to before level factories to make index tests work
@@ -286,28 +286,136 @@ describe V1::LevelsController do
 
     # --------------- #
 
-    # NOTE: index controller orders by id desc
+    # NOTE: there are 6 levels - one comes from create_user which would be the first one in the list
     it "should return the correct values" do
       get :index
-      expect(JSON.parse(response.body)['data'][4]['name'].to_s).to eq(@level1.name.to_s)
-      expect(JSON.parse(response.body)['data'][4]['handicap'].to_s).to eq(@level1.handicap.to_s)
-      expect(JSON.parse(response.body)['data'][4]['description'].to_s).to eq(@level1.description.to_s)
+      expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@level1.name.to_s)
+      expect(JSON.parse(response.body)['data'][1]['handicap'].to_s).to eq(@level1.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][1]['description'].to_s).to eq(@level1.description.to_s)
 
-      expect(JSON.parse(response.body)['data'][3]['name'].to_s).to eq(@level2.name.to_s)
-      expect(JSON.parse(response.body)['data'][3]['handicap'].to_s).to eq(@level2.handicap.to_s)
-      expect(JSON.parse(response.body)['data'][3]['description'].to_s).to eq(@level2.description.to_s)
+      expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@level2.name.to_s)
+      expect(JSON.parse(response.body)['data'][2]['handicap'].to_s).to eq(@level2.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][2]['description'].to_s).to eq(@level2.description.to_s)
 
-      expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@level3.name.to_s)
-      expect(JSON.parse(response.body)['data'][2]['handicap'].to_s).to eq(@level3.handicap.to_s)
-      expect(JSON.parse(response.body)['data'][2]['description'].to_s).to eq(@level3.description.to_s)
+      expect(JSON.parse(response.body)['data'][3]['name'].to_s).to eq(@level3.name.to_s)
+      expect(JSON.parse(response.body)['data'][3]['handicap'].to_s).to eq(@level3.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][3]['description'].to_s).to eq(@level3.description.to_s)
 
-      expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@level4.name.to_s)
-      expect(JSON.parse(response.body)['data'][1]['handicap'].to_s).to eq(@level4.handicap.to_s)
-      expect(JSON.parse(response.body)['data'][1]['description'].to_s).to eq(@level4.description.to_s)
+      expect(JSON.parse(response.body)['data'][4]['name'].to_s).to eq(@level4.name.to_s)
+      expect(JSON.parse(response.body)['data'][4]['handicap'].to_s).to eq(@level4.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][4]['description'].to_s).to eq(@level4.description.to_s)
 
-      expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@level5.name.to_s)
-      expect(JSON.parse(response.body)['data'][0]['handicap'].to_s).to eq(@level5.handicap.to_s)
-      expect(JSON.parse(response.body)['data'][0]['description'].to_s).to eq(@level5.description.to_s)
+      expect(JSON.parse(response.body)['data'][5]['name'].to_s).to eq(@level5.name.to_s)
+      expect(JSON.parse(response.body)['data'][5]['handicap'].to_s).to eq(@level5.handicap.to_s)
+      expect(JSON.parse(response.body)['data'][5]['description'].to_s).to eq(@level5.description.to_s)
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    #NOTE: there are 32 results - 26 from alphabet, 5 from before_all and 1 from create_user
+    context "pagination" do
+      context "page" do
+        before(:all) do
+          ("a".."z").each do |u|
+            FactoryGirl.create(:level, :name => u)
+          end
+        end
+
+        after(:all) do
+          ("a".."z").each do |u|
+            Level.where(:name => u).destroy_all
+          end
+        end
+
+        # ------------------------------ #
+        # ------------------------------ #
+
+        context "results length" do
+          it "should return 15 results for the first page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 1
+            expect(JSON.parse(response.body)['data'].length).to eq(15)
+          end
+
+          # --------------- #
+
+          it "should return 6 results for the second page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 2
+            expect(JSON.parse(response.body)['data'].length).to eq(15)
+          end
+
+          # --------------- #
+
+          it "should return 0 results for the third page" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :page => 3
+            expect(JSON.parse(response.body)['data'].length).to eq(2)
+          end
+
+          # --------------- #
+
+          it "should return 10 results for the first page with per_page param" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :per_page => 10
+            expect(JSON.parse(response.body)['data'].length).to eq(10)
+          end
+
+          # --------------- #
+
+          it "should return 10 results for the third page with per_page param" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :per_page => 10, :page => 3
+            expect(JSON.parse(response.body)['data'].length).to eq(10)
+          end
+
+          # --------------- #
+
+          it "should return 2 results for the fourth page with per_page param" do
+            sign_in @user
+            request.headers.merge!(@user.create_new_auth_token)
+
+            get :index, format: :json, :per_page => 10, :page => 4
+            expect(JSON.parse(response.body)['data'].length).to eq(2)
+          end
+        end
+
+        # ------------------------------ #
+        # ------------------------------ #
+
+        context "order by" do
+          context "name" do
+            it "should return user with name of 'a' for first result when ordering by name asc" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :order_by => "name", :order_direction => "ASC"
+              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("a")
+            end
+
+            # --------------- #
+
+            it "should return user with name of 'z' for first result when ordering by name desc" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :order_by => "name", :order_direction => "DESC"
+              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("z")
+            end
+          end
+        end
+      end
     end
   end
 
