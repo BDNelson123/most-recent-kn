@@ -14,7 +14,9 @@ class V1::CoursesController < ApplicationController
   end
 
   def index
-    render :json => { :data => Course.paginate(:page => params[:page], :per_page => params[:per_page]).common_attributes.all.order(params[:order_by] => params[:order_direction]) }, :status => 200
+    render :json => { :data => Course.main_index(params) }, :status => 200
+  rescue ActiveRecord::StatementInvalid => error
+    render :json => { :errors => "Your query is invalid." }, :status => 422
   end
 
   def destroy

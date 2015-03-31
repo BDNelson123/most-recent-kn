@@ -237,6 +237,61 @@ describe V1::ClubsController, :type => :api do
     # ------------------------------ #
     # ------------------------------ #
 
+    context "where_attributes" do
+      it "should return 3 results where id > @club1.id" do
+        get :index, format: :json, :where => "id > #{@club1.id}"
+        expect(JSON.parse(response.body)['data'].length).to eq(3)
+      end
+
+      # --------------- #
+
+      it "should return 1 result where name = @club1.name" do
+        get :index, format: :json, :where => "name='#{@club1.name.to_s}'"
+        expect(JSON.parse(response.body)['data'].length).to eq(1)
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@club1.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should not return an error if the query is valid but no results were returned" do
+        get :index, format: :json, :where => "name='this wont give any result'"
+        expect(JSON.parse(response.body)['data'].length).to eq(0)
+        expect(response.status).to eq(200)
+      end
+
+      # --------------- #
+
+      it "should return an error if the query is invalid" do
+        get :index, format: :json, :where => "testtesttest='#{@club1.name.to_s}'"
+        expect(JSON.parse(response.body)['errors']).to eq("Your query is invalid.")
+        expect(response.status).to eq(422)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "count" do
+      it "should return 4 results" do
+        get :index, format: :json, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to eq(4)
+      end
+
+      # --------------- #
+
+      it "should return 2 results with a where statement of id > @club2.id" do
+        get :index, format: :json, :count => "true", :where => "id>'#{@club2.id}'"
+        expect(JSON.parse(response.body)['data']['count']).to eq(2)
+      end
+
+      # --------------- #
+
+      it "should return 0 results if the query is valid but no results were returned" do
+        get :index, format: :json, :count => "true", :where => "name='this wont give any result'"
+        expect(JSON.parse(response.body)['data']['count']).to eq(0)
+      end
+    end
+
     #NOTE: there are 30 results - 26 from alphabet, 3 from before_all and 1 from create_user
     context "pagination" do
       context "page" do

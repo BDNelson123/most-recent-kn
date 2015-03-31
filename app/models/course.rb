@@ -1,4 +1,6 @@
 class Course < ActiveRecord::Base
+  include ActiveRecordBaseExtensionScope
+
   belongs_to :user
   validates :name, :presence => true
   validates :address, :presence => true
