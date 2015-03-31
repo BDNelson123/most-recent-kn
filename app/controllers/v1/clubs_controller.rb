@@ -25,7 +25,11 @@ class V1::ClubsController < ApplicationController
   end
 
   def index
-    render :json => { :data => Club.paginate(:page => params[:page], :per_page => params[:per_page]).common_attributes.all.order(params[:order_by] => params[:order_direction]) }, :status => 200
+    if params[:count] == "true"
+      render :json => { :data => { :count => Club.where_attributes(params).count } }
+    else
+      render :json => { :data => Club.where_attributes(params).paginate(:page => params[:page], :per_page => params[:per_page]).common_attributes.all.order(params[:order_by] => params[:order_direction]) }, :status => 200
+    end
   end
 
   def show
