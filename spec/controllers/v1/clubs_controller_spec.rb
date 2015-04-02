@@ -292,6 +292,62 @@ describe V1::ClubsController, :type => :api do
       end
     end
 
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "search" do
+      it "should return 1 result" do
+        get :index, format: :json, :search => @club1.name
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :where => "id>'#{@club1.id}'", :search => @club2.name
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@club2.name)
+      end
+
+      # --------------- #
+
+      it "should return 0 results" do
+        get :index, format: :json, :where => "id>'#{@club1.id}'", :search => @club1.name
+        expect(JSON.parse(response.body)['data']).to_not include(@club1.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should return a value of 1 when user searches for @club1.name and wants to count it" do
+        get :index, format: :json, :search => @club1.name, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return a value of 1 when user searches for @club1.name and wants to count it with a where statement" do
+        get :index, format: :json, :where => "id>'#{@club1.id}'", :search => @club2.name, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return a value of 2 when user searches for @club1.name and wants to count it with a where statement - new record used" do
+        club4 = FactoryGirl.create(:club, :name => @club2.name + "2")
+        get :index, format: :json, :where => "id>'#{@club1.id}'", :search => @club2.name, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to eq(2)
+      end
+
+      # --------------- #
+
+      it "should return the correct values when searching with where statement" do
+        club4 = FactoryGirl.create(:club, :name => @club2.name + "2")
+        get :index, format: :json, :where => "id>'#{@club1.id}'", :search => @club2.name
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@club2.name)
+        expect(JSON.parse(response.body)['data'][1]['name']).to eq(@club2.name + "2")
+      end
+    end
+
     #NOTE: there are 30 results - 26 from alphabet, 3 from before_all and 1 from create_user
     context "pagination" do
       context "page" do

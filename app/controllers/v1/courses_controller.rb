@@ -14,7 +14,7 @@ class V1::CoursesController < ApplicationController
   end
 
   def index
-    render :json => { :data => Course.main_index(params) }, :status => 200
+    render :json => { :data => Course.search_attributes(params).main_index(params) }, :status => 200
   rescue ActiveRecord::StatementInvalid => error
     render :json => { :errors => "Your query is invalid." }, :status => 422
   end

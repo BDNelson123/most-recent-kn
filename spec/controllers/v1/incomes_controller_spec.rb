@@ -227,6 +227,159 @@ describe V1::IncomesController, :type => :api do
       expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@income3.name.to_s)
     end
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "where_attributes" do
+      it "should return 3 results where id > @income1.id" do
+        get :index, format: :json, :where => "id > #{@income1.id}"
+        expect(JSON.parse(response.body)['data'].length).to eq(3)
+      end
+
+      # --------------- #
+
+      it "should return 1 result where name = @income1.name" do
+        get :index, format: :json, :where => "name='#{@income1.name.to_s}'"
+        expect(JSON.parse(response.body)['data'].length).to eq(1)
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@income1.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should not return an error if the query is valid but no results were returned" do
+        get :index, format: :json, :where => "name='this wont give any result'"
+        expect(JSON.parse(response.body)['data'].length).to eq(0)
+        expect(response.status).to eq(200)
+      end
+
+      # --------------- #
+
+      it "should return an error if the query is invalid" do
+        get :index, format: :json, :where => "testtesttest='#{@income1.name.to_s}'"
+        expect(JSON.parse(response.body)['errors']).to eq("Your query is invalid.")
+        expect(response.status).to eq(422)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    #NOTE: create_user has an income in it.  4 income models have been created.
+    context "count" do
+      it "should return 4 results" do
+        get :index, format: :json, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to eq(4)
+      end
+
+      # --------------- #
+
+      it "should return 1 result with a where statement of id > @income2.id" do
+        get :index, format: :json, :count => "true", :where => "id>'#{@income2.id}'"
+        expect(JSON.parse(response.body)['data']['count']).to eq(2)
+      end
+
+      # --------------- #
+
+      it "should return 0 results if the query is valid but no results were returned" do
+        get :index, format: :json, :count => "true", :where => "name='this wont give any result'"
+        expect(JSON.parse(response.body)['data']['count']).to eq(0)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "search" do
+      it "should return 1 result" do
+        get :index, format: :json, :search => @income1.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :where => "id>'#{@income1.id}'", :search => @income2.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@income2.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should return 0 results" do
+        get :index, format: :json, :where => "id>'#{@income1.id}'", :search => @income1.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to eq(0)
+        expect(JSON.parse(response.body)['data']).to_not include(@income1.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should return a value of 1 when user searches for @income1.name and wants to count it" do
+        get :index, format: :json, :search => @income1.name.to_s, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return a value of 2 when user searches for @income1.name and wants to count it with a where statement - new record used" do
+        income4 = FactoryGirl.create(:income, :name => @income2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@income1.id}'", :search => @income2.name.to_s, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to eq(2)
+        income4.destroy
+      end
+
+      # --------------- #
+
+      it "should return the correct values when searching with where statement" do
+        income4 = FactoryGirl.create(:income, :name => @income2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@income1.id}'", :search => @income2.name.to_s, :order_direction => "ASC"
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@income2.name.to_s)
+        expect(JSON.parse(response.body)['data'][1]['name']).to eq(income4.name.to_s)
+        income4.destroy
+      end
+
+      # --------------- #
+
+      it "should return the correct values when searching with where statement - order desc" do
+        income4 = FactoryGirl.create(:income, :name => @income2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@income1.id}'", :search => @income2.name.to_s, :order_direction => "DESC"
+        expect(JSON.parse(response.body)['data'][1]['name']).to eq(@income2.name.to_s)
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(income4.name.to_s)
+        income4.destroy
+      end
+    end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     # ------------------------------ #
     # ------------------------------ #
 

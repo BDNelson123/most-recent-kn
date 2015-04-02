@@ -25,7 +25,7 @@ class V1::ClubsController < ApplicationController
   end
 
   def index
-    render :json => { :data => Club.main_index(params) }, :status => 200
+    render :json => { :data => Club.search_attributes(params).main_index(params) }, :status => 200
   rescue ActiveRecord::StatementInvalid => error
     render :json => { :errors => "Your query is invalid." }, :status => 422
   end

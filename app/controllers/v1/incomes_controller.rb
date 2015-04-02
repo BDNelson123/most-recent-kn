@@ -25,7 +25,9 @@ class V1::IncomesController < ApplicationController
   end
 
   def index
-    render :json => { :data => Income.paginate(:page => params[:page], :per_page => params[:per_page]).common_attributes.all.order(params[:order_by] => params[:order_direction]) }, :status => 200
+    render :json => { :data => Income.search_attributes(params).main_index(params) }, :status => 200
+  rescue ActiveRecord::StatementInvalid => error
+    render :json => { :errors => "Your query is invalid." }, :status => 422
   end
 
   def show

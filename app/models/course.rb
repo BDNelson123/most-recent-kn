@@ -9,4 +9,11 @@ class Course < ActiveRecord::Base
   validates :zip, :presence => true
 
   scope :common_attributes, -> { select('id, name, address, address2, city, state, zip')}
+
+  scope :search_attributes, -> (params) { 
+    if params[:search] != nil
+      return where("courses.name LIKE ? OR courses.address LIKE ? OR courses.address2 LIKE ? OR courses.city LIKE ? OR courses.state LIKE ? OR courses.zip LIKE ?", "%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%")
+    end
+    nil
+  }
 end

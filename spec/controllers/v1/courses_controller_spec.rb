@@ -272,6 +272,110 @@ describe V1::CoursesController, :type => :api do
       end
     end
 
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "search" do
+      it "should return 1 result" do
+        get :index, format: :json, :search => @course1.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :search => @course2.address.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :search => @course3.address2.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :search => @course1.city.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :search => @course2.state.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :search => @course3.zip
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :where => "id>'#{@course1.id}'", :search => @course2.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@course2.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should return 0 results" do
+        get :index, format: :json, :where => "id>'#{@course1.id}'", :search => @course1.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to eq(0)
+        expect(JSON.parse(response.body)['data']).to_not include(@course1.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should return a value of 1 when user searches for @course1.name and wants to count it" do
+        get :index, format: :json, :search => @course1.name.to_s, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return a value of 1 when user searches for @course1.name and wants to count it with a where statement" do
+        get :index, format: :json, :where => "id>'#{@course1.id}'", :search => @course2.address.to_s, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return a value of 2 when user searches for @course1.name and wants to count it with a where statement - new record used" do
+        course4 = FactoryGirl.create(:course, :name => @course2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@course1.id}'", :search => @course2.name.to_s, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to eq(2)
+        course4.destroy
+      end
+
+      # --------------- #
+
+      it "should return the correct values when searching with where statement" do
+        course4 = FactoryGirl.create(:course, :name => @course2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@course1.id}'", :search => @course2.name.to_s, :order_direction => "ASC"
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@course2.name.to_s)
+        expect(JSON.parse(response.body)['data'][1]['name']).to eq(course4.name.to_s)
+        course4.destroy
+      end
+
+      # --------------- #
+
+      it "should return the correct values when searching with where statement - order desc" do
+        course4 = FactoryGirl.create(:course, :name => @course2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@course1.id}'", :search => @course2.name.to_s, :order_direction => "DESC"
+        expect(JSON.parse(response.body)['data'][1]['name']).to eq(@course2.name.to_s)
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(course4.name.to_s)
+        course4.destroy
+      end
+    end
+
     #NOTE: there are 29 results - 26 from alphabet and 3 from before_all
     context "pagination" do
       context "page" do
