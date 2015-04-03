@@ -143,7 +143,7 @@ describe V1::UsersController, :type => :api do
               request.headers.merge!(@user.create_new_auth_token)
 
               get :index, format: :json, :order_by => "name", :order_direction => "ASC"
-              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("a")
+              expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("a")
             end
 
             # --------------- #
@@ -153,7 +153,7 @@ describe V1::UsersController, :type => :api do
               request.headers.merge!(@user.create_new_auth_token)
 
               get :index, format: :json, :order_by => "name", :order_direction => "DESC"
-              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("z")
+              expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("z")
             end
           end
         end
@@ -165,6 +165,7 @@ describe V1::UsersController, :type => :api do
   # --------------------------------------------- #
   # --------------------------------------------- #
 
+  # SHOW action tests
   describe "#show" do
     context "authentication" do
       it "user must be signed in to get 200 response" do

@@ -217,7 +217,8 @@ describe V1::CoursesController, :type => :api do
     # ------------------------------ #
 
     context "where_attributes" do
-      it "should return 3 results where id > @course1.id" do
+      # create_user does not have a course so only 2 courses should come after the first
+      it "should return 2 results where id > @course1.id" do
         get :index, format: :json, :where => "id > #{@course1.id}"
         expect(JSON.parse(response.body)['data'].length).to eq(2)
       end
@@ -259,7 +260,7 @@ describe V1::CoursesController, :type => :api do
 
       # --------------- #
 
-      it "should return 2 results with a where statement of id > @course2.id" do
+      it "should return 1 result with a where statement of id > @course2.id" do
         get :index, format: :json, :count => "true", :where => "id>'#{@course2.id}'"
         expect(JSON.parse(response.body)['data']['count']).to eq(1)
       end
@@ -454,7 +455,7 @@ describe V1::CoursesController, :type => :api do
               request.headers.merge!(@user.create_new_auth_token)
 
               get :index, format: :json, :order_by => "name", :order_direction => "ASC"
-              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("a")
+              expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("a")
             end
 
             # --------------- #
@@ -464,7 +465,7 @@ describe V1::CoursesController, :type => :api do
               request.headers.merge!(@user.create_new_auth_token)
 
               get :index, format: :json, :order_by => "name", :order_direction => "DESC"
-              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("z")
+              expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("z")
             end
           end
         end
