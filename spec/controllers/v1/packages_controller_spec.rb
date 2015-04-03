@@ -309,124 +309,270 @@ describe V1::PackagesController, :type => :api do
 
   # INDEX action tests
   describe "#index" do
-    it "should return a response of 200" do
-      get :index
-      expect(response.status).to eq(200)
-    end
+    context "authentication" do
+      it "should return a status of 401 if user is not logged in" do
+        get :index
+        expect(response.status).to eq(401)
+      end
 
-    # --------------- #
+      # --------------- #
 
-    it "should return 3 total rows" do
-      get :index
-      expect(JSON.parse(response.body)['data'].length).to eq(3)
-    end
+      it "should return a response of 200 if user is logged in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
 
-    # --------------- #
-
-    # NOTE: index controller orders by name desc
-    it "should return the correct values" do
-      get :index
-      expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@package1.name.to_s)
-      expect(JSON.parse(response.body)['data'][0]['package_features'].to_s).to eq("")
-      expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@package2.name.to_s)
-      expect(JSON.parse(response.body)['data'][1]['package_features'].to_s).to include(@features1.name.to_s)
-      expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@package3.name.to_s)
-      expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include(@features2.name.to_s)
-      expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include(@features3.name.to_s)
+        get :index
+        expect(response.status).to eq(200)
+      end
     end
 
     # ------------------------------ #
     # ------------------------------ #
 
-    #NOTE: there are 30 results - 26 from alphabet and 3 from before_all
-    context "pagination" do
-      context "page" do
-        before(:all) do
-          ("a".."z").each do |u|
-            FactoryGirl.create(:package, :name => u, :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
-          end
+    context "logged in" do
+      before(:each) do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+      end
+
+      it "should return 3 total rows" do
+        get :index
+        expect(JSON.parse(response.body)['data'].length).to eq(3)
+      end
+
+      # --------------- #
+
+      # NOTE: index controller orders by name desc
+      it "should return the correct values" do
+        get :index
+        expect(JSON.parse(response.body)['data'][0]['name'].to_s).to eq(@package1.name.to_s)
+        expect(JSON.parse(response.body)['data'][0]['package_features'].to_s).to eq("")
+        expect(JSON.parse(response.body)['data'][1]['name'].to_s).to eq(@package2.name.to_s)
+        expect(JSON.parse(response.body)['data'][1]['package_features'].to_s).to include(@features1.name.to_s)
+        expect(JSON.parse(response.body)['data'][2]['name'].to_s).to eq(@package3.name.to_s)
+        expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include(@features2.name.to_s)
+        expect(JSON.parse(response.body)['data'][2]['package_features'].to_s).to include(@features3.name.to_s)
+      end
+
+      # ------------------------------ #
+      # ------------------------------ #
+
+      context "search" do
+        it "should return at least 1 result" do
+          get :index, format: :json, :search => @package1.name.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 1
         end
 
-        after(:all) do
-          ("a".."z").each do |u|
-            Package.where(:name => u).destroy_all
-          end
+        # --------------- #
+
+        it "should return at least 1 result" do
+          get :index, format: :json, :search => @package2.description.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 1
         end
 
-        # ------------------------------ #
-        # ------------------------------ #
+        # --------------- #
 
-        context "results length" do
-          it "should return 15 results for the first page" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
-            get :index, format: :json, :page => 1
-            expect(JSON.parse(response.body)['data'].length).to eq(15)
-          end
-
-          # --------------- #
-
-          it "should return 6 results for the second page" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
-            get :index, format: :json, :page => 2
-            expect(JSON.parse(response.body)['data'].length).to eq(14)
-          end
-
-          # --------------- #
-
-          it "should return 0 results for the third page" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
-            get :index, format: :json, :page => 3
-            expect(JSON.parse(response.body)['data'].length).to eq(0)
-          end
-
-          # --------------- #
-
-          it "should return 10 results for the first page with per_page param" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
-            get :index, format: :json, :per_page => 10
-            expect(JSON.parse(response.body)['data'].length).to eq(10)
-          end
-
-          # --------------- #
-
-          it "should return 10 results for the third page with per_page param" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
-            get :index, format: :json, :per_page => 10, :page => 3
-            expect(JSON.parse(response.body)['data'].length).to eq(9)
-          end
+        it "should return 1 result" do
+          get :index, format: :json, :search => @package3.price.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 1
         end
 
-        # ------------------------------ #
-        # ------------------------------ #
+        # --------------- #
 
-        context "order by" do
-          context "name" do
-            it "should return user with name of 'a' for first result when ordering by name asc" do
+        it "should return at least 1 result" do
+          get :index, format: :json, :search => @package1.credits.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 1
+        end
+
+        # --------------- #
+
+        it "should return at least 1 result" do
+          get :index, format: :json, :search => @features1.name.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 1
+        end
+
+        # --------------- #
+
+        it "should return at least 2 result" do
+          package4 = FactoryGirl.create(:package, :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
+          get :index, format: :json, :search => @features2.name.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 2
+          package4.destroy
+        end
+
+        # --------------- #
+
+        it "should return at least 1 result" do
+          package4 = FactoryGirl.create(:package, :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
+          get :index, format: :json, :search => @features3.name.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 1
+          package4.destroy
+        end
+
+        # --------------- #
+
+        it "should return at least 1 result" do
+          get :index, format: :json, :where => "packages.id>'#{@package2.id}'", :search => @package3.name.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 1
+          expect(JSON.parse(response.body)['data'][0]['name']).to eq(@package3.name.to_s)
+        end
+
+        # --------------- #
+
+        it "should return 0 results" do
+          get :index, format: :json, :where => "packages.id>'#{@package2.id}'", :search => @package1.name.to_s
+          expect(JSON.parse(response.body)['data'].length).to eq(0)
+          expect(JSON.parse(response.body)['data']).to_not include(@package1.name.to_s)
+        end
+
+        # --------------- #
+
+        it "should return a value of at least 1 when user searches for @package1.name and wants to count it" do
+          get :index, format: :json, :search => @package1.name.to_s, :count => "true"
+          expect(JSON.parse(response.body)['data']['count']).to be >= 1
+        end
+
+        # --------------- #
+
+        it "should return at least 2 results" do
+          package4 = FactoryGirl.create(:package, :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
+          get :index, format: :json, :search => @features2.name.to_s, :count => "true"
+          expect(JSON.parse(response.body)['data']['count']).to be >= 2
+          package4.destroy
+        end
+
+        # --------------- #
+
+        it "should return at least 2 results" do
+          package4 = FactoryGirl.create(:package, :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
+          get :index, format: :json, :search => @features3.name.to_s
+          expect(JSON.parse(response.body)['data'].length).to be >= 2
+          package4.destroy
+        end
+
+        # --------------- #
+
+        it "should return a value of 2 when user searches for @package1.name and wants to count it with a where statement - new record used" do
+          package4 = FactoryGirl.create(:package, :name => @package3.name.to_s + "2")
+          get :index, format: :json, :where => "packages.id>'#{@package2.id}'", :search => @package3.name.to_s, :count => "true"
+          expect(JSON.parse(response.body)['data']['count']).to eq(2)
+          package4.destroy
+        end
+
+        # --------------- #
+
+        it "should return the correct values when searching with where statement" do
+          package4 = FactoryGirl.create(:package, :name => @package3.name.to_s + "2")
+          get :index, format: :json, :where => "packages.id>'#{@package2.id}'", :search => @package3.name.to_s, :order_direction => "ASC"
+          expect(JSON.parse(response.body)['data'][0]['name']).to eq(@package3.name.to_s)
+          expect(JSON.parse(response.body)['data'][1]['name']).to eq(package4.name.to_s)
+          package4.destroy
+        end
+
+        # --------------- #
+
+        it "should return the correct values when searching with where statement - order desc" do
+          package4 = FactoryGirl.create(:package, :name => @package2.name.to_s + "2")
+          get :index, format: :json, :where => "packages.id>'#{@package1.id}'", :search => @package2.name.to_s, :order_direction => "DESC"
+          expect(JSON.parse(response.body)['data'][1]['name']).to eq(@package2.name.to_s)
+          expect(JSON.parse(response.body)['data'][0]['name']).to eq(package4.name.to_s)
+          package4.destroy
+        end
+      end
+
+      # ------------------------------ #
+      # ------------------------------ #
+
+      #NOTE: there are 30 results - 26 from alphabet and 3 from before_all
+      context "pagination" do
+        context "page" do
+          before(:all) do
+            ("a".."z").each do |u|
+              FactoryGirl.create(:package, :name => u, :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
+            end
+          end
+
+          after(:all) do
+            ("a".."z").each do |u|
+              Package.where(:name => u).destroy_all
+            end
+          end
+
+          # ------------------------------ #
+          # ------------------------------ #
+
+          context "results length" do
+            it "should return 15 results for the first page" do
               sign_in @user
               request.headers.merge!(@user.create_new_auth_token)
 
-              get :index, format: :json, :order_by => "name", :order_direction => "ASC"
-              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("a")
+              get :index, format: :json, :page => 1
+              expect(JSON.parse(response.body)['data'].length).to eq(15)
             end
 
             # --------------- #
 
-            it "should return user with name of 'z' for first result when ordering by name desc" do
+            it "should return 6 results for the second page" do
               sign_in @user
               request.headers.merge!(@user.create_new_auth_token)
 
-              get :index, format: :json, :order_by => "name", :order_direction => "DESC"
-              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("z")
+              get :index, format: :json, :page => 2
+              expect(JSON.parse(response.body)['data'].length).to eq(14)
+            end
+
+            # --------------- #
+
+            it "should return 0 results for the third page" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :page => 3
+              expect(JSON.parse(response.body)['data'].length).to eq(0)
+            end
+
+            # --------------- #
+
+            it "should return 10 results for the first page with per_page param" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :per_page => 10
+              expect(JSON.parse(response.body)['data'].length).to eq(10)
+            end
+
+            # --------------- #
+
+            it "should return 10 results for the third page with per_page param" do
+              sign_in @user
+              request.headers.merge!(@user.create_new_auth_token)
+
+              get :index, format: :json, :per_page => 10, :page => 3
+              expect(JSON.parse(response.body)['data'].length).to eq(9)
+            end
+          end
+
+          # ------------------------------ #
+          # ------------------------------ #
+
+          context "order by" do
+            context "name" do
+              it "should return user with name of 'a' for first result when ordering by name asc" do
+                sign_in @user
+                request.headers.merge!(@user.create_new_auth_token)
+
+                get :index, format: :json, :order_by => "name", :order_direction => "ASC"
+                expect(JSON.parse(response.body)["data"][0]["name"]).to include("a")
+              end
+
+              # --------------- #
+
+              it "should return user with name of 'z' for first result when ordering by name desc" do
+                sign_in @user
+                request.headers.merge!(@user.create_new_auth_token)
+
+                get :index, format: :json, :order_by => "name", :order_direction => "DESC"
+                expect(JSON.parse(response.body)["data"][0]["name"]).to include("z")
+              end
             end
           end
         end
@@ -434,58 +580,92 @@ describe V1::PackagesController, :type => :api do
     end
   end
 
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
   # SHOW action tests
   describe "#show" do
-    context "response status" do 
-      it "should return a response of 200 if record exists" do
+    context "authentication" do
+      it "should return a status of 401 if user is not logged in" do
         get :show, { 'id' => @package1.id }
-        expect(response.status).to eq(200)
+        expect(response.status).to eq(401)
       end
 
       # --------------- #
 
-      it "should return a response of 422 if record does not exist" do
-        get :show, { 'id' => @package3.id + 1 }
-        expect(response.status).to eq(422)
+      it "should return a response of 200 if user is logged in" do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+
+        get :show, { 'id' => @package1.id }
+        expect(response.status).to eq(200)
       end
     end
 
     # ------------------------------ #
     # ------------------------------ #
 
-    it "should return 1 record with 6 fields" do
-      get :show, { 'id' => @package1.id }
-      expect(JSON.parse(response.body)['data'].length).to eq(6) # 6 fields for one record (id, name, description, features, price, credits)
-    end
+    context "logged in" do
+      before(:each) do
+        sign_in @user
+        request.headers.merge!(@user.create_new_auth_token)
+      end
 
-    # --------------- #
+      # ------------------------------ #
+      # ------------------------------ #
 
-    it "should return the correct data for package1" do
-      get :show, { 'id' => @package1.id }
-      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@package1.id.to_i)
-      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@package1.name.to_s)
-      expect(JSON.parse(response.body)['data']['description'].to_s).to eq(@package1.description.to_s)
-      expect(JSON.parse(response.body)['data']['price'].to_s).to eq(@package1.price.to_s)
-      expect(JSON.parse(response.body)['data']['package_features'].to_s).to eq("")
-    end
+      context "response status" do 
+        it "should return a response of 200 if record exists" do
+          get :show, { 'id' => @package1.id }
+          expect(response.status).to eq(200)
+        end
 
-    # --------------- #
+        # --------------- #
 
-    it "should return the correct data for package2" do
-      get :show, { 'id' => @package2.id }
-      expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@package2.id.to_i)
-      expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@package2.name.to_s)
-      expect(JSON.parse(response.body)['data']['description'].to_s).to eq(@package2.description.to_s)
-      expect(JSON.parse(response.body)['data']['price'].to_s).to eq(@package2.price.to_s)
-      expect(JSON.parse(response.body)['data']['package_features'].to_s).to include(@features1.name.to_s)
-      expect(JSON.parse(response.body)['data']['package_features'].to_s).to_not include(@features2.name.to_s)
-    end
+        it "should return a response of 422 if record does not exist" do
+          get :show, { 'id' => @package3.id + 1 }
+          expect(response.status).to eq(422)
+        end
+      end
 
-    # --------------- #
+      # ------------------------------ #
+      # ------------------------------ #
 
-    it "should return the correct error if the package id can't be found" do
-      get :show, { 'id' => @package3.id + 1 }
-      expect(JSON.parse(response.body)['errors'].to_s).to eq("The package with id #{@package3.id + 1} could not be found.")
+      it "should return 1 record with 6 fields" do
+        get :show, { 'id' => @package1.id }
+        expect(JSON.parse(response.body)['data'].length).to eq(6) # 6 fields for one record (id, name, description, features, price, credits)
+      end
+
+      # --------------- #
+
+      it "should return the correct data for package1" do
+        get :show, { 'id' => @package1.id }
+        expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@package1.id.to_i)
+        expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@package1.name.to_s)
+        expect(JSON.parse(response.body)['data']['description'].to_s).to eq(@package1.description.to_s)
+        expect(JSON.parse(response.body)['data']['price'].to_s).to eq(@package1.price.to_s)
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to eq("")
+      end
+
+      # --------------- #
+
+      it "should return the correct data for package2" do
+        get :show, { 'id' => @package2.id }
+        expect(JSON.parse(response.body)['data']['id'].to_i).to eq(@package2.id.to_i)
+        expect(JSON.parse(response.body)['data']['name'].to_s).to eq(@package2.name.to_s)
+        expect(JSON.parse(response.body)['data']['description'].to_s).to eq(@package2.description.to_s)
+        expect(JSON.parse(response.body)['data']['price'].to_s).to eq(@package2.price.to_s)
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to include(@features1.name.to_s)
+        expect(JSON.parse(response.body)['data']['package_features'].to_s).to_not include(@features2.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should return the correct error if the package id can't be found" do
+        get :show, { 'id' => @package3.id + 1 }
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("The package with id #{@package3.id + 1} could not be found.")
+      end
     end
   end
 
