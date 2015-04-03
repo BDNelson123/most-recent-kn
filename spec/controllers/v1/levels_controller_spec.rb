@@ -313,6 +313,155 @@ describe V1::LevelsController, :type => :api do
     # ------------------------------ #
     # ------------------------------ #
 
+    # 6 levels - 5 from before(:all) and 1 from create_user
+    context "where_attributes" do
+      it "should return 4 results where id > @level1.id" do
+        get :index, format: :json, :where => "id > #{@level1.id}"
+        expect(JSON.parse(response.body)['data'].length).to eq(4)
+      end
+
+      # --------------- #
+
+      it "should return 1 result where name = @level1.name" do
+        get :index, format: :json, :where => "name='#{@level1.name.to_s}'"
+        expect(JSON.parse(response.body)['data'].length).to eq(1)
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@level1.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should not return an error if the query is valid but no results were returned" do
+        get :index, format: :json, :where => "name='this wont give any result'"
+        expect(JSON.parse(response.body)['data'].length).to eq(0)
+        expect(response.status).to eq(200)
+      end
+
+      # --------------- #
+
+      it "should return an error if the query is invalid" do
+        get :index, format: :json, :where => "testtesttest='#{@level1.name.to_s}'"
+        expect(JSON.parse(response.body)['errors']).to eq("Your query is invalid.")
+        expect(response.status).to eq(422)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    # 6 levels - 5 from before(:all) and 1 from create_user
+    context "count" do
+      it "should return 6 results" do
+        get :index, format: :json, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to eq(6)
+      end
+
+      # --------------- #
+
+      it "should return 3 results with a where statement of id > @level2.id" do
+        get :index, format: :json, :count => "true", :where => "id>'#{@level2.id}'"
+        expect(JSON.parse(response.body)['data']['count']).to eq(3)
+      end
+
+      # --------------- #
+
+      it "should return 0 results if the query is valid but no results were returned" do
+        get :index, format: :json, :count => "true", :where => "name='this wont give any result'"
+        expect(JSON.parse(response.body)['data']['count']).to eq(0)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "search" do
+      it "should return 1 result" do
+        get :index, format: :json, :search => @level1.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :search => @level2.handicap.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return 1 result" do
+        get :index, format: :json, :search => @level3.description.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+      end
+
+      it "should return 1 result" do
+        get :index, format: :json, :where => "id>'#{@level1.id}'", :search => @level2.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to be >= 1
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@level2.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should return 0 results" do
+        get :index, format: :json, :where => "id>'#{@level1.id}'", :search => @level1.name.to_s
+        expect(JSON.parse(response.body)['data'].length).to eq(0)
+        expect(JSON.parse(response.body)['data']).to_not include(@level1.name.to_s)
+      end
+
+      # --------------- #
+
+      it "should return a value of 1 when user searches for @level1.name and wants to count it" do
+        get :index, format: :json, :search => @level1.name.to_s, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return a value of 1 when user searches for @level1.name and wants to count it with a where statement" do
+        get :index, format: :json, :where => "id>'#{@level1.id}'", :search => @level2.handicap.to_s, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to be >= 1
+      end
+
+      # --------------- #
+
+      it "should return a value of 2 when user searches for @level1.name and wants to count it with a where statement - new record used" do
+        level4 = FactoryGirl.create(:level, :name => @level2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@level1.id}'", :search => @level2.name.to_s, :count => "true"
+        expect(JSON.parse(response.body)['data']['count']).to eq(2)
+        level4.destroy
+      end
+
+      # --------------- #
+
+      it "should return the correct values when searching with where statement" do
+        level4 = FactoryGirl.create(:level, :name => @level2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@level1.id}'", :search => @level2.name.to_s, :order_direction => "ASC"
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(@level2.name.to_s)
+        expect(JSON.parse(response.body)['data'][0]['handicap']).to eq(@level2.handicap.to_s)
+        expect(JSON.parse(response.body)['data'][0]['description']).to eq(@level2.description.to_s)
+        expect(JSON.parse(response.body)['data'][1]['name']).to eq(level4.name.to_s)
+        expect(JSON.parse(response.body)['data'][1]['handicap']).to eq(level4.handicap.to_s)
+        expect(JSON.parse(response.body)['data'][1]['description']).to eq(level4.description.to_s)
+        level4.destroy
+      end
+
+      # --------------- #
+
+      it "should return the correct values when searching with where statement - order desc" do
+        level4 = FactoryGirl.create(:level, :name => @level2.name.to_s + "2")
+        get :index, format: :json, :where => "id>'#{@level1.id}'", :search => @level2.name.to_s, :order_direction => "DESC"
+        expect(JSON.parse(response.body)['data'][1]['name']).to eq(@level2.name.to_s)
+        expect(JSON.parse(response.body)['data'][1]['handicap']).to eq(@level2.handicap.to_s)
+        expect(JSON.parse(response.body)['data'][1]['description']).to eq(@level2.description.to_s)
+        expect(JSON.parse(response.body)['data'][0]['name']).to eq(level4.name.to_s)
+        expect(JSON.parse(response.body)['data'][0]['handicap']).to eq(level4.handicap.to_s)
+        expect(JSON.parse(response.body)['data'][0]['description']).to eq(level4.description.to_s)
+        level4.destroy
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
     #NOTE: there are 32 results - 26 from alphabet, 5 from before_all and 1 from create_user
     context "pagination" do
       context "page" do
@@ -401,7 +550,7 @@ describe V1::LevelsController, :type => :api do
               request.headers.merge!(@user.create_new_auth_token)
 
               get :index, format: :json, :order_by => "name", :order_direction => "ASC"
-              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("a")
+              expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("a")
             end
 
             # --------------- #
@@ -411,7 +560,7 @@ describe V1::LevelsController, :type => :api do
               request.headers.merge!(@user.create_new_auth_token)
 
               get :index, format: :json, :order_by => "name", :order_direction => "DESC"
-              expect(JSON.parse(response.body)["data"][0]["name"]).to eq("z")
+              expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("z")
             end
           end
         end
