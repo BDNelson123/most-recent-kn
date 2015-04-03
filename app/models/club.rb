@@ -1,7 +1,8 @@
 class Club < ActiveRecord::Base
   include ActiveRecordBaseExtensionScope
 
-  belongs_to :user
+  has_many :users
+
   validates :name, :presence => true
   validates_uniqueness_of :name, :case_sensitive => false
  
