@@ -4,10 +4,9 @@ module ActiveRecordBaseExtensionScope
   included do
     scope :where_attributes, -> (params) { 
       if params[:where] != nil
-        where(params[:where])
-      else
-        nil
+        return where(params[:where])
       end
+      nil
     }
 
     scope :main_index, -> (params) {
