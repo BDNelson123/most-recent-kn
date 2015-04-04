@@ -43,9 +43,8 @@ class User < ActiveRecord::Base
       users.city, users.state, users.zip, users.phone, users.dob, users.handedness, users.owns_clubs, 
       users.email_optin, users.terms_accepted, users.gender, users.level_id, levels.name as level_name,
       iron_club.id as iron_club_id, iron_club.name as iron_club_name, wood_club.id as wood_club_id, 
-      wood_club.name as wood_club_name, users.course_id, courses.name as course_name, 
-      users.income_id, incomes.name as income_name, users.package_id, packages.name as packages_name,
-      GROUP_CONCAT(features.name) as package_features
+      wood_club.name as wood_club_name, users.course_id, courses.name as course_name, users.income_id, 
+      incomes.name as income_name, users.package_id, packages.name as packages_name
     ')
   }
 
