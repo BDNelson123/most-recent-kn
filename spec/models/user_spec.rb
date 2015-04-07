@@ -285,4 +285,26 @@ describe User do
       end
     end
   end
+
+  describe "find_user" do
+    it "should return find_by_id" do
+      params = { :id => 1 }
+      expect(User.find_user(params)).to eq(User.user_join.common_attributes.find_by_id(1))
+    end
+
+    it "should return find_by_id" do
+      params = { :type => "test", :id => 1 }
+      expect(User.find_user(params)).to eq(User.user_join.common_attributes.find_by_id(1))
+    end
+
+    it "should return find_by_email" do
+      params = { :type => "email", :id => "test@test.com" }
+      expect(User.find_user(params)).to eq(User.user_join.common_attributes.find_by_email("test@test.com"))
+    end
+
+    it "should return find_by_phone" do
+      params = { :type => "phone", :id => 18888888888 }
+      expect(User.find_user(params)).to eq(User.user_join.common_attributes.find_by_phone(18888888888))
+    end
+  end
 end

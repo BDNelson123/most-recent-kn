@@ -10,9 +10,9 @@ class V1::UsersController < ApplicationController
   end
 
   def show
-    user = User.user_join.common_attributes.find_by_id(params[:id])
+    user = User.find_user(params)
 
-    if user.id == nil
+    if user.blank?
       render :json => { :errors => "The user with id #{params[:id]} could not be found." }, :status => 422
     else
       render :json => { :data => user }, :status => 200
@@ -20,7 +20,7 @@ class V1::UsersController < ApplicationController
   end
 
   def destroy
-    user = User.common_attributes.find_by_id(params[:id])
+    user = User.find_by_id(params[:id])
 
     if user.blank?
       render :json => { :errors => "The user with id #{params[:id]} could not be found." }, :status => 422

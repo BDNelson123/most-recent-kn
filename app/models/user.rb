@@ -64,12 +64,10 @@ class User < ActiveRecord::Base
         users.name LIKE ? OR users.address LIKE ? OR users.address2 LIKE ? OR
         users.city LIKE ? OR users.state LIKE ? OR users.zip LIKE ? OR
         users.phone LIKE ? OR users.dob LIKE ? OR users.email LIKE ? OR
-        iron_club.name LIKE ? OR packages.name LIKE ? OR features.name LIKE ? OR
-        users.address LIKE ?", 
+        iron_club.name LIKE ? OR packages.name LIKE ?", 
         "%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%",
         "%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%",
-        "%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%",
-        "%#{params[:search]}%"
+        "%#{params[:search]}%","%#{params[:search]}%","%#{params[:search]}%"
       )
     end
     nil
@@ -81,4 +79,15 @@ class User < ActiveRecord::Base
     end
     nil
   }
+
+  def self.find_user(params)
+    case params[:type]
+      when "email"
+        User.user_join.common_attributes.find_by_email(params[:id])
+      when "phone"
+        User.user_join.common_attributes.find_by_phone(params[:id])
+      else
+        User.user_join.common_attributes.find_by_id(params[:id])
+    end
+  end
 end
