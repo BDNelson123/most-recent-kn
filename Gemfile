@@ -12,6 +12,7 @@ gem 'omniauth-facebook', '2.0.1'
 gem 'rack-cors', '0.3.1', :require => 'rack/cors'
 gem 'validates_email_format_of', :git => 'git://github.com/alexdunae/validates_email_format_of.git'
 gem 'will_paginate', '3.0.7'
+gem 'sidekiq', '3.3.3'
 
 group :development, :test do
   gem 'byebug'
