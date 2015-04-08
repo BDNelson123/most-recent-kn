@@ -1,7 +1,9 @@
 module SpecHelpers
   def delete_factories
+    Admin.destroy_all
     Club.destroy_all
     Course.destroy_all
+    Employee.destroy_all
     Feature.destroy_all
     Featurization.destroy_all
     Income.destroy_all
