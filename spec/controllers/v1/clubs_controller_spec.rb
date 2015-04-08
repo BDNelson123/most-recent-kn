@@ -7,9 +7,7 @@ describe V1::ClubsController, :type => :api do
     @club1 = FactoryGirl.create(:club)
     @club2 = FactoryGirl.create(:club)
     @club3 = FactoryGirl.create(:club)
-    @admin = FactoryGirl.create(:admin)
-    @employee = FactoryGirl.create(:employee)
-    create_user
+    create_user_employee_admin
   end
 
   after(:all) do
@@ -31,8 +29,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return a response status of 401 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @user
         post :create, format: :json, :club => {:name => "test"}
         expect(response.status).to eq(401)
       end
@@ -40,8 +37,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return a response status of 401 if employee is logged in" do
-        sign_in @employee
-        request.headers.merge!(@employee.create_new_auth_token)
+        custom_sign_in @employee
         post :create, format: :json, :club => {:name => "test"}
         expect(response.status).to eq(401)
       end
@@ -49,8 +45,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return a response status of 201 if admin is logged in" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :club => {:name => "test"}
         expect(response.status).to eq(201)
       end
@@ -61,16 +56,13 @@ describe V1::ClubsController, :type => :api do
 
     context "response status" do
       it "should return a response status of 422 if record is not created" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :club => {:name => nil}
         expect(response.status).to eq(422)
       end
 
       it "should return a response status of 422 if record already exists - validation for unique name" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
-
+        custom_sign_in @admin
         club4 = FactoryGirl.create(:club, :name => "test")
         post :create, format: :json, :club => {:name => "test"}
         expect(response.status).to eq(422)
@@ -83,8 +75,7 @@ describe V1::ClubsController, :type => :api do
 
     context "club record creation" do
       it "should add new record to db" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :club => {:name => "test"}}.to change(Club, :count).by(1)
       end
 
@@ -97,32 +88,28 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should not add new record to db - user signed in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @user
         expect {post :create, format: :json, :club => {:name => "test"}}.to change(Club, :count).by(0)
       end
 
       # --------------- #
 
       it "should not add new record to db - employee signed in" do
-        sign_in @employee
-        request.headers.merge!(@employee.create_new_auth_token)
+        custom_sign_in @employee
         expect {post :create, format: :json, :club => {:name => "test"}}.to change(Club, :count).by(0)
       end
 
       # --------------- #
 
       it "should not add new record to db - validation fail for name - nil" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :club => {:name => nil}}.to change(Club, :count).by(0)
       end
 
       # --------------- #
 
       it "should not add new record to db - validation fail for name - not unique" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :club => {:name => @club1.name.to_s}}.to change(Club, :count).by(0)
       end
     end
@@ -132,8 +119,7 @@ describe V1::ClubsController, :type => :api do
 
     context "returned data" do
       it "should return the object id and name in the data hash" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :club => {:name => "thisisasuperdupertest"}
         expect(JSON.parse(response.body)['data'].to_s).to include("\"name\"=>\"thisisasuperdupertest\"")
       end
@@ -141,8 +127,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return the validation error for name already being taken" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :club => {:name => @club1.name.to_s}
         expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
       end
@@ -150,8 +135,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return the validation error for name being null" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :club => {:name => nil}
         expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
       end
@@ -184,8 +168,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return a response status of 401 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @user
         delete :destroy, format: :json, :id => @club4.id 
         expect(response.status).to eq(401)
       end
@@ -193,8 +176,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return a response status of 401 if employee is logged in" do
-        sign_in @employee
-        request.headers.merge!(@employee.create_new_auth_token)
+        custom_sign_in @employee
         delete :destroy, format: :json, :id => @club4.id 
         expect(response.status).to eq(401)
       end
@@ -202,8 +184,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return a response status of 202 if admin is logged in" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @club4.id 
         expect(response.status).to eq(202)
       end
@@ -214,8 +195,7 @@ describe V1::ClubsController, :type => :api do
 
     context "club record deletion" do
       it "should remove record from db" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         expect {delete :destroy, format: :json, :id => @club4.id}.to change(Club, :count).by(-1)
       end
 
@@ -228,16 +208,14 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should not delete record from db - user signed in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @user
         expect {delete :destroy, format: :json, :id => @club4.id}.to change(Club, :count).by(0)
       end
 
       # --------------- #
 
       it "should not delete record from db - employee signed in" do
-        sign_in @employee
-        request.headers.merge!(@employee.create_new_auth_token)
+        custom_sign_in @employee
         expect {delete :destroy, format: :json, :id => @club4.id}.to change(Club, :count).by(0)
       end
     end
@@ -254,9 +232,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should send back validation that user is not authorized - user logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-
+        custom_sign_in @user
         delete :destroy, format: :json, :id => @club4.id 
         expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
       end
@@ -264,9 +240,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should send back validation that user is not authorized - employee logged in" do
-        sign_in @employee
-        request.headers.merge!(@employee.create_new_auth_token)
-
+        custom_sign_in @employee
         delete :destroy, format: :json, :id => @club4.id 
         expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
       end
@@ -274,9 +248,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should send back validation that record has been deleted" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
-
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @club4.id 
         expect(JSON.parse(response.body)['data'].to_s).to include("The club with id #{@club4.id} has been deleted.")
       end
@@ -284,9 +256,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should send back validation that record has been deleted" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
-
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @club4.id + 1 
         expect(JSON.parse(response.body)['errors'].to_s).to include("The club with id #{@club4.id + 1} could not be found.")
       end
@@ -584,8 +554,7 @@ describe V1::ClubsController, :type => :api do
         # --------------- #
 
         it "should return a status of 422 if user is logged in" do
-          sign_in @user
-          request.headers.merge!(@user.create_new_auth_token)
+          custom_sign_in @user
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
           put :update, format: :json, :id => club4.id, :club => {:name => "test"}
           expect(response.status).to eq(401)
@@ -595,8 +564,7 @@ describe V1::ClubsController, :type => :api do
         # --------------- #
 
         it "should return a status of 422 if employee is logged in" do
-          sign_in @employee
-          request.headers.merge!(@employee.create_new_auth_token)
+          custom_sign_in @employee
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
           put :update, format: :json, :id => club4.id, :club => {:name => "test"}
           expect(response.status).to eq(401)
@@ -606,8 +574,7 @@ describe V1::ClubsController, :type => :api do
         # --------------- #
 
         it "should return a status of 200 if admin is logged in" do
-          sign_in @admin
-          request.headers.merge!(@admin.create_new_auth_token)
+          custom_sign_in @admin
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
           put :update, format: :json, :id => club4.id, :club => {:name => "test"}
           expect(response.status).to eq(200)
@@ -621,9 +588,7 @@ describe V1::ClubsController, :type => :api do
 
     context "no record" do
       it "should return a status of 422 if record cant be found" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
-
+        custom_sign_in @admin
         #NOTE: this is due to the user model having a club record (must add 2 - not 1)
         put :update, format: :json, :id => @club3.id + 2, :club => {:name => "test"}
         expect(response.status).to eq(422)
@@ -635,8 +600,7 @@ describe V1::ClubsController, :type => :api do
 
     context "validations" do
       it "should return a status of 422 if club name has already been taken" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
         put :update, format: :json, :id => club4.id, :club => {:name => @club1.name.to_s}
         expect(response.status).to eq(422)
@@ -646,8 +610,7 @@ describe V1::ClubsController, :type => :api do
       # --------------- #
 
       it "should return a status of 422 if club name is blank" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
         put :update, format: :json, :id => club4.id, :club => {:name => ""}
         expect(response.status).to eq(422)
@@ -661,8 +624,7 @@ describe V1::ClubsController, :type => :api do
     context "response data" do
       context "no record" do
         it "should return the correct error response if the club id can't be found" do
-          sign_in @admin
-          request.headers.merge!(@admin.create_new_auth_token)
+          custom_sign_in @admin
           #NOTE: this is due to the user model having a club record
           put :update, format: :json, :id => @club3.id + 2, :club => {:name => "test"}
           expect(JSON.parse(response.body)['errors'].to_s).to eq("The club with id #{@club3.id + 2} could not be found.")
@@ -683,8 +645,7 @@ describe V1::ClubsController, :type => :api do
         # --------------- #
 
         it "should return - Authorized users only. - if user is not logged in" do
-          sign_in @user
-          request.headers.merge!(@user.create_new_auth_token)
+          custom_sign_in @user
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
           put :update, format: :json, :id => club4.id, :club => {:name => "test"}
           expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
@@ -694,8 +655,7 @@ describe V1::ClubsController, :type => :api do
         # --------------- #
 
         it "should return - Authorized users only. - if employee is not logged in" do
-          sign_in @employee
-          request.headers.merge!(@employee.create_new_auth_token)
+          custom_sign_in @employee
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
           put :update, format: :json, :id => club4.id, :club => {:name => "test"}
           expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
@@ -705,8 +665,7 @@ describe V1::ClubsController, :type => :api do
         # --------------- #
 
         it "should return data of the updated club if no validation errors and user logged in" do
-          sign_in @admin
-          request.headers.merge!(@admin.create_new_auth_token)
+          custom_sign_in @admin
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
           put :update, format: :json, :id => club4.id, :club => {:name => "test"}
           expect(JSON.parse(response.body)['data']['name'].to_s).to eq("test")
@@ -720,8 +679,7 @@ describe V1::ClubsController, :type => :api do
 
       context "messages" do
         it "should return Name Can't be blank if name is blank" do
-          sign_in @admin
-          request.headers.merge!(@admin.create_new_auth_token)
+          custom_sign_in @admin
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
           put :update, format: :json, :id => club4.id, :club => {:name => ""}
           expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
@@ -731,8 +689,7 @@ describe V1::ClubsController, :type => :api do
         # --------------- #
 
         it "should return Name is already taken if name has already been taken" do
-          sign_in @admin
-          request.headers.merge!(@admin.create_new_auth_token)
+          custom_sign_in @admin
           club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
           put :update, format: :json, :id => club4.id, :club => {:name => @club1.name.to_s}
           expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
@@ -746,8 +703,7 @@ describe V1::ClubsController, :type => :api do
 
     context "db creation" do
       it "should not create or delete a record from the db when updating" do
-        sign_in @admin
-        request.headers.merge!(@admin.create_new_auth_token)
+        custom_sign_in @admin
         club4 = FactoryGirl.create(:club, :name => "Cleveland Golf")
         expect {put :update, format: :json, :id => club4.id, :club => {:name => "test"}}.to change(Club, :count).by(0)
         club4.destroy
