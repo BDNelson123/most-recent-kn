@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150407205907) do
+ActiveRecord::Schema.define(version: 20150408190933) do
 
   create_table "admins", force: :cascade do |t|
     t.string   "provider",               limit: 255,                null: false
@@ -190,7 +190,6 @@ ActiveRecord::Schema.define(version: 20150407205907) do
     t.integer  "package_id",             limit: 4
     t.integer  "course_id",              limit: 4
     t.integer  "income_id",              limit: 4
-    t.integer  "role_id",                limit: 4
     t.integer  "iron_club_id",           limit: 4
     t.integer  "wood_club_id",           limit: 4
   end
