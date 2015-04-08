@@ -12,10 +12,17 @@ module SpecHelpers
     User.destroy_all
   end
 
-  def create_user
+  def create_user_employee_admin
     @income = FactoryGirl.create(:income)
     @level = FactoryGirl.create(:level)
     @club = FactoryGirl.create(:club)
     @user = FactoryGirl.create(:user, :wood_club_id => @club.id, :iron_club_id => @club.id, :level_id => @level.id, :income_id => @income.id)
+    @admin = FactoryGirl.create(:admin)
+    @employee = FactoryGirl.create(:employee)
+  end
+
+  def custom_sign_in(model)
+    sign_in model
+    request.headers.merge!(model.create_new_auth_token)
   end
 end
