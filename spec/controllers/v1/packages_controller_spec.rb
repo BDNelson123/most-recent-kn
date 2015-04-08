@@ -12,7 +12,7 @@ describe V1::PackagesController, :type => :api do
     @package2 = FactoryGirl.create(:package, :features => [Feature.find_by_id(@features1.id)])
     @package3 = FactoryGirl.create(:package, :features => [Feature.find_by_id(@features2.id),Feature.find_by_id(@features3.id)])
 
-    create_user
+    create_user_employee_admin
   end
 
   after(:all) do
@@ -22,7 +22,23 @@ describe V1::PackagesController, :type => :api do
   # CREATE action tests
   describe "#create" do
     context "authentication" do
-      it "should return a response status of 401 if user is not logged in" do
+      it "should return a response status of 401 if no one is logged in" do
+        post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features1.id}]}
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if user is logged in" do
+        custom_sign_in @user
+        post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features1.id}]}
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if employee is logged in" do
+        custom_sign_in @employee
         post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features1.id}]}
         expect(response.status).to eq(401)
       end
@@ -30,8 +46,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return a response status of 201 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         post :create, 
           format: :json, 
           :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}
@@ -44,8 +59,7 @@ describe V1::PackagesController, :type => :api do
 
     context "response status" do
       it "should return a response status of 422 if record is not created" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         post :create, 
           format: :json, 
           :package => {:name => nil, :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}
@@ -58,14 +72,27 @@ describe V1::PackagesController, :type => :api do
 
     context "package record creation" do
       it "should add new record to db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}}.to change(Package, :count).by(1)
       end
 
       # --------------- #
 
       it "should not add new record to db - not signed in" do
+        expect {post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}}.to change(Package, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - user signed in" do
+        custom_sign_in @user
+        expect {post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}}.to change(Package, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - employee signed in" do
+        custom_sign_in @employee
         expect {post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}}.to change(Package, :count).by(0)
       end
     end
@@ -80,17 +107,29 @@ describe V1::PackagesController, :type => :api do
 
       # --------------- #
 
+      it "should not add new record to db - user signed in" do
+        custom_sign_in @user
+        expect {post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}}.to change(Featurization, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - employee signed in" do
+        custom_sign_in @employee
+        expect {post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}}.to change(Featurization, :count).by(0)
+      end
+
+      # --------------- #
+
       it "should add one new record to db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id}]}}.to change(Featurization, :count).by(1)
       end
 
       # --------------- #
 
       it "should add two new records to db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{:feature_id => @features2.id},{:feature_id => @features3.id}]}}.to change(Featurization, :count).by(2)
       end
     end
@@ -100,8 +139,7 @@ describe V1::PackagesController, :type => :api do
 
     context "validations" do
       it "should return 1 error for feature when its not a valid id" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         post :create, 
@@ -115,8 +153,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 1 error for name when its blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         post :create, 
@@ -130,8 +167,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 1 error for description when its blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         post :create, 
@@ -143,8 +179,7 @@ describe V1::PackagesController, :type => :api do
       end
 
       it "should return 2 errors for price when its blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         post :create, 
@@ -158,8 +193,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 1 error for price when its not numeric" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         post :create, 
@@ -173,8 +207,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 2 errors for credits when its blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         post :create, 
@@ -186,8 +219,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 1 error for credits when its not an integer" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         post :create, 
@@ -234,9 +266,25 @@ describe V1::PackagesController, :type => :api do
       end
 
       # --------------- #
-      it "should return a response status of 202 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+
+      it "should return a response status of 401 if user is logged in" do
+        custom_sign_in @user
+        delete :destroy, format: :json, :id => @package4.id 
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if employee is logged in" do
+        custom_sign_in @employee
+        delete :destroy, format: :json, :id => @package4.id 
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 202 if admin is logged in" do
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @package4.id 
         expect(response.status).to eq(202)
       end
@@ -247,14 +295,27 @@ describe V1::PackagesController, :type => :api do
 
     context "package record deletion" do
       it "should add new record to db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {delete :destroy, format: :json, :id => @package4.id}.to change(Package, :count).by(-1)
       end
 
       # --------------- #
 
       it "should not add new record to db - not signed in" do
+        expect {delete :destroy, format: :json, :id => @package4.id}.to change(Package, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - user signed in" do
+        custom_sign_in @user
+        expect {delete :destroy, format: :json, :id => @package4.id}.to change(Package, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - employee signed in" do
+        custom_sign_in @user
         expect {delete :destroy, format: :json, :id => @package4.id}.to change(Package, :count).by(0)
       end
     end
@@ -269,9 +330,22 @@ describe V1::PackagesController, :type => :api do
 
       # --------------- #
 
+      it "should not add new record to db - user signed in" do
+        custom_sign_in @user
+        expect {delete :destroy, format: :json, :id => @package4.id}.to change(Featurization, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - employee signed in" do
+        custom_sign_in @employee
+        expect {delete :destroy, format: :json, :id => @package4.id}.to change(Featurization, :count).by(0)
+      end
+
+      # --------------- #
+
       it "should delete two records to db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {delete :destroy, format: :json, :id => @package4.id}.to change(Featurization, :count).by(-2)
       end
     end
@@ -285,18 +359,33 @@ describe V1::PackagesController, :type => :api do
         expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
       end
 
-      it "should send back validation that record has been deleted" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+      # --------------- #
 
+      it "should send back validation that user is not authorized - user logged in" do
+        custom_sign_in @user
+        delete :destroy, format: :json, :id => @package4.id 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that user is not authorized - employee logged in" do
+        custom_sign_in @employee
+        delete :destroy, format: :json, :id => @package4.id 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
+
+      # --------------- #
+      it "should send back validation that record has been deleted" do
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @package4.id 
         expect(JSON.parse(response.body)['data'].to_s).to include("The package with id #{@package4.id} has been deleted.")
       end
 
-      it "should send back validation that record has been deleted" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+      # --------------- #
 
+      it "should send back validation that record has been deleted" do
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @package4.id + 1 
         expect(JSON.parse(response.body)['errors'].to_s).to include("The package with id #{@package4.id + 1} could not be found.")
       end
@@ -317,10 +406,24 @@ describe V1::PackagesController, :type => :api do
 
       # --------------- #
 
-      it "should return a response of 200 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+      it "should return a response of 200 if admin is logged in" do
+        custom_sign_in @admin
+        get :index
+        expect(response.status).to eq(200)
+      end
 
+      # --------------- #
+
+      it "should return a response of 200 if employee is logged in" do
+        custom_sign_in @employee
+        get :index
+        expect(response.status).to eq(200)
+      end
+
+      # --------------- #
+
+      it "should return a response of 200 if user is logged in" do
+        custom_sign_in @user
         get :index
         expect(response.status).to eq(200)
       end
@@ -331,8 +434,7 @@ describe V1::PackagesController, :type => :api do
 
     context "logged in" do
       before(:each) do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
       end
 
       it "should return 3 total rows" do
@@ -503,9 +605,6 @@ describe V1::PackagesController, :type => :api do
 
           context "results length" do
             it "should return 15 results for the first page" do
-              sign_in @user
-              request.headers.merge!(@user.create_new_auth_token)
-
               get :index, format: :json, :page => 1
               expect(JSON.parse(response.body)['data'].length).to eq(15)
             end
@@ -513,9 +612,6 @@ describe V1::PackagesController, :type => :api do
             # --------------- #
 
             it "should return 6 results for the second page" do
-              sign_in @user
-              request.headers.merge!(@user.create_new_auth_token)
-
               get :index, format: :json, :page => 2
               expect(JSON.parse(response.body)['data'].length).to eq(14)
             end
@@ -523,9 +619,6 @@ describe V1::PackagesController, :type => :api do
             # --------------- #
 
             it "should return 0 results for the third page" do
-              sign_in @user
-              request.headers.merge!(@user.create_new_auth_token)
-
               get :index, format: :json, :page => 3
               expect(JSON.parse(response.body)['data'].length).to eq(0)
             end
@@ -533,9 +626,6 @@ describe V1::PackagesController, :type => :api do
             # --------------- #
 
             it "should return 10 results for the first page with per_page param" do
-              sign_in @user
-              request.headers.merge!(@user.create_new_auth_token)
-
               get :index, format: :json, :per_page => 10
               expect(JSON.parse(response.body)['data'].length).to eq(10)
             end
@@ -543,9 +633,6 @@ describe V1::PackagesController, :type => :api do
             # --------------- #
 
             it "should return 10 results for the third page with per_page param" do
-              sign_in @user
-              request.headers.merge!(@user.create_new_auth_token)
-
               get :index, format: :json, :per_page => 10, :page => 3
               expect(JSON.parse(response.body)['data'].length).to eq(9)
             end
@@ -557,9 +644,6 @@ describe V1::PackagesController, :type => :api do
           context "order by" do
             context "name" do
               it "should return user with name of 'a' for first result when ordering by name asc" do
-                sign_in @user
-                request.headers.merge!(@user.create_new_auth_token)
-
                 get :index, format: :json, :order_by => "name", :order_direction => "ASC"
                 expect(JSON.parse(response.body)["data"][0]["name"]).to include("a")
               end
@@ -567,9 +651,6 @@ describe V1::PackagesController, :type => :api do
               # --------------- #
 
               it "should return user with name of 'z' for first result when ordering by name desc" do
-                sign_in @user
-                request.headers.merge!(@user.create_new_auth_token)
-
                 get :index, format: :json, :order_by => "name", :order_direction => "DESC"
                 expect(JSON.parse(response.body)["data"][0]["name"]).to include("z")
               end
@@ -594,10 +675,24 @@ describe V1::PackagesController, :type => :api do
 
       # --------------- #
 
-      it "should return a response of 200 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+      it "should return a response of 200 if admin is logged in" do
+        custom_sign_in @admin
+        get :show, { 'id' => @package1.id }
+        expect(response.status).to eq(200)
+      end
 
+      # --------------- #
+
+      it "should return a response of 200 if employee is logged in" do
+        custom_sign_in @employee
+        get :show, { 'id' => @package1.id }
+        expect(response.status).to eq(200)
+      end
+
+      # --------------- #
+
+      it "should return a response of 200 if user is logged in" do
+        custom_sign_in @user
         get :show, { 'id' => @package1.id }
         expect(response.status).to eq(200)
       end
@@ -608,8 +703,7 @@ describe V1::PackagesController, :type => :api do
 
     context "logged in" do
       before(:each) do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
       end
 
       # ------------------------------ #
@@ -690,9 +784,38 @@ describe V1::PackagesController, :type => :api do
 
       # --------------- #
 
-      it "should return a status of 200 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+      it "should return a status of 401 if user is logged in" do
+        custom_sign_in @user
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{"feature_id" => @features1.id},{"feature_id" => @features2.id}]}
+        expect(response.status).to eq(401)
+
+        package4.destroy
+      end
+
+      # --------------- #
+
+      it "should return a status of 401 if employee is logged in" do
+        custom_sign_in @employee
+        package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
+
+        put :update, 
+          format: :json, 
+          :id => package4.id, 
+          :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, :featurizations_attributes => [{"feature_id" => @features1.id},{"feature_id" => @features2.id}]}
+        expect(response.status).to eq(401)
+
+        package4.destroy
+      end
+
+      # --------------- #
+
+      it "should return a status of 200 if admin is logged in" do
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -707,8 +830,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return a status of 422 if record cant be found" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
 
         put :update, 
           format: :json, 
@@ -723,8 +845,7 @@ describe V1::PackagesController, :type => :api do
 
     context "featurization record creation / deletion" do
       it "should add one record to featurization db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         expect {put :update, format: :json, :id => package4.id, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, 
@@ -736,8 +857,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should add two records to featurization db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         expect {put :update, format: :json, :id => package4.id, :package => {:name => "test", :description => "test", :price => "22.0", :credits => 20, 
@@ -752,8 +872,7 @@ describe V1::PackagesController, :type => :api do
 
     context "correct data" do
       it "should return 6 fields" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -768,8 +887,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return only the last two features and not the first one" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -789,8 +907,7 @@ describe V1::PackagesController, :type => :api do
 
     context "validations" do
       it "should return 1 error for feature when its not a valid id" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -805,8 +922,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 1 error for name when its blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -821,8 +937,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 1 error for description when its blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -837,8 +952,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 2 errors for price when its blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -853,8 +967,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 1 error for price when its not numeric" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -869,8 +982,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 2 errors for credits when its blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 
@@ -885,8 +997,7 @@ describe V1::PackagesController, :type => :api do
       # --------------- #
 
       it "should return 1 error for credits when its not an integer" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         package4 = FactoryGirl.create(:package, :name => "Platinum", :description => "FlyingTee Membership card", :credits => 500, :price => "250.0", :features => [Feature.find_by_id(@features1.id)])
 
         put :update, 

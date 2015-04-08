@@ -27,4 +27,10 @@ class ApplicationController < ActionController::Base
     params[:order_by] ||= "id"
     params[:order_direction] ||= "ASC"
   end
+
+  def custom_authenticate_member(current_member)
+    if current_member == nil && params[:master_api_key] != "thisisatest" 
+      render :json => { :errors => ["Authorized users only."] }, status: 401	
+    end
+  end
 end

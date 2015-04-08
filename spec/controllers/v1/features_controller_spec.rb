@@ -7,7 +7,7 @@ describe V1::FeaturesController, :type => :api do
     @feature1 = FactoryGirl.create(:feature)
     @feature2 = FactoryGirl.create(:feature)
     @feature3 = FactoryGirl.create(:feature)
-    create_user
+    create_user_employee_admin
   end
 
   after(:all) do
@@ -21,7 +21,23 @@ describe V1::FeaturesController, :type => :api do
   # CREATE action tests
   describe "#create" do
     context "authentication" do
-      it "should return a response status of 401 if user is not logged in" do
+      it "should return a response status of 401 if no one is not logged in" do
+        post :create, format: :json, :feature => {:name => "test"}
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if user is logged in" do
+        custom_sign_in @user
+        post :create, format: :json, :feature => {:name => "test"}
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if employee is logged in" do
+        custom_sign_in @employee
         post :create, format: :json, :feature => {:name => "test"}
         expect(response.status).to eq(401)
       end
@@ -29,8 +45,7 @@ describe V1::FeaturesController, :type => :api do
       # --------------- #
 
       it "should return a response status of 201 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :feature => {:name => "test"}
         expect(response.status).to eq(201)
       end
@@ -41,16 +56,13 @@ describe V1::FeaturesController, :type => :api do
 
     context "response status" do
       it "should return a response status of 422 if record is not created" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :feature => {:name => nil}
         expect(response.status).to eq(422)
       end
 
       it "should return a response status of 422 if record already exists - validation for unique name" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-
+        custom_sign_in @admin
         feature4 = FactoryGirl.create(:feature, :name => "test")
         post :create, format: :json, :feature => {:name => "test"}
         expect(response.status).to eq(422)
@@ -63,8 +75,7 @@ describe V1::FeaturesController, :type => :api do
 
     context "feature record creation" do
       it "should add new record to db" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :feature => {:name => "test"}}.to change(Feature, :count).by(1)
       end
 
@@ -76,17 +87,29 @@ describe V1::FeaturesController, :type => :api do
 
       # --------------- #
 
+      it "should not add new record to db - user signed in" do
+        custom_sign_in @user
+        expect {post :create, format: :json, :feature => {:name => "test"}}.to change(Feature, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not add new record to db - employee signed in" do
+        custom_sign_in @employee
+        expect {post :create, format: :json, :feature => {:name => "test"}}.to change(Feature, :count).by(0)
+      end
+
+      # --------------- #
+
       it "should not add new record to db - validation fail for name - nil" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :feature => {:name => nil}}.to change(Feature, :count).by(0)
       end
 
       # --------------- #
 
       it "should not add new record to db - validation fail for name - not unique" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {post :create, format: :json, :feature => {:name => @feature1.name.to_s}}.to change(Feature, :count).by(0)
       end
     end
@@ -96,8 +119,7 @@ describe V1::FeaturesController, :type => :api do
 
     context "returned data" do
       it "should return the object id and name in the data hash" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :feature => {:name => "thisisasuperdupertest"}
         expect(JSON.parse(response.body)['data'].to_s).to include("\"name\"=>\"thisisasuperdupertest\"")
       end
@@ -105,8 +127,7 @@ describe V1::FeaturesController, :type => :api do
       # --------------- #
 
       it "should return the validation error for name already being taken" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :feature => {:name => @feature1.name.to_s}
         expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
       end
@@ -114,8 +135,7 @@ describe V1::FeaturesController, :type => :api do
       # --------------- #
 
       it "should return the validation error for name being null" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         post :create, format: :json, :feature => {:name => nil}
         expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
       end
@@ -144,7 +164,23 @@ describe V1::FeaturesController, :type => :api do
     # ------------------------------ #
 
     context "authentication & response status" do
-      it "should return a response status of 401 if user is not logged in" do
+      it "should return a response status of 401 if no one is not logged in" do
+        delete :destroy, format: :json, :id => @feature4.id 
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if user is logged in" do
+        custom_sign_in @user
+        delete :destroy, format: :json, :id => @feature4.id 
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if employee is logged in" do
+        custom_sign_in @employee
         delete :destroy, format: :json, :id => @feature4.id 
         expect(response.status).to eq(401)
       end
@@ -152,8 +188,7 @@ describe V1::FeaturesController, :type => :api do
       # --------------- #
 
       it "should return a response status of 202 if user is logged in" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @feature4.id 
         expect(response.status).to eq(202)
       end
@@ -164,17 +199,8 @@ describe V1::FeaturesController, :type => :api do
 
     context "feature record deletion" do
       it "should delete record from feature table" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         expect {delete :destroy, format: :json, :id => @feature4.id}.to change(Feature, :count).by(-1)
-      end
-
-      # --------------- #
-
-      it "should delete record from featurizations table" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-        expect {delete :destroy, format: :json, :id => @feature4.id}.to change(Featurization, :count).by(-1)
       end
 
       # --------------- #
@@ -185,8 +211,43 @@ describe V1::FeaturesController, :type => :api do
 
       # --------------- #
 
+      it "should not delete record from features table - user signed in" do
+        custom_sign_in @user
+        expect {delete :destroy, format: :json, :id => @feature4.id}.to change(Feature, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not delete record from features table - employee signed in" do
+        custom_sign_in @employee
+        expect {delete :destroy, format: :json, :id => @feature4.id}.to change(Feature, :count).by(0)
+      end
+
+      # --------------- #
+
       it "should not delete record from featurizations table - not signed in" do
         expect {delete :destroy, format: :json, :id => @feature4.id}.to change(Featurization, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not delete record from featurizations table - user signed in" do
+        custom_sign_in @user
+        expect {delete :destroy, format: :json, :id => @feature4.id}.to change(Featurization, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not delete record from featurizations table - employee signed in" do
+        custom_sign_in @employee
+        expect {delete :destroy, format: :json, :id => @feature4.id}.to change(Featurization, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should delete record from featurizations table" do
+        custom_sign_in @admin
+        expect {delete :destroy, format: :json, :id => @feature4.id}.to change(Featurization, :count).by(-1)
       end
     end
 
@@ -201,10 +262,24 @@ describe V1::FeaturesController, :type => :api do
 
       # --------------- #
 
-      it "should send back validation that record has been deleted" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+      it "should send back validation that user is not authorized - user logged in" do
+        custom_sign_in @user
+        delete :destroy, format: :json, :id => @feature4.id 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
 
+      # --------------- #
+
+      it "should send back validation that user is not authorized - employee logged in" do
+        custom_sign_in @employee
+        delete :destroy, format: :json, :id => @feature4.id 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that record has been deleted" do
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @feature4.id 
         expect(JSON.parse(response.body)['data'].to_s).to include("The feature with id #{@feature4.id} has been deleted.")
       end
@@ -212,9 +287,7 @@ describe V1::FeaturesController, :type => :api do
       # --------------- #
 
       it "should send back validation that record has been deleted" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-
+        custom_sign_in @admin
         delete :destroy, format: :json, :id => @feature4.id + 1 
         expect(JSON.parse(response.body)['errors'].to_s).to include("The feature with id #{@feature4.id + 1} could not be found.")
       end
@@ -385,9 +458,7 @@ describe V1::FeaturesController, :type => :api do
 
         context "results length" do
           it "should return 15 results for the first page" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
+            custom_sign_in @admin
             get :index, format: :json, :page => 1
             expect(JSON.parse(response.body)['data'].length).to eq(15)
           end
@@ -395,9 +466,7 @@ describe V1::FeaturesController, :type => :api do
           # --------------- #
 
           it "should return 14 results for the second page" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
+            custom_sign_in @admin
             get :index, format: :json, :page => 2
             expect(JSON.parse(response.body)['data'].length).to eq(14)
           end
@@ -405,9 +474,7 @@ describe V1::FeaturesController, :type => :api do
           # --------------- #
 
           it "should return 0 results for the third page" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
+            custom_sign_in @admin
             get :index, format: :json, :page => 3
             expect(JSON.parse(response.body)['data'].length).to eq(0)
           end
@@ -415,9 +482,7 @@ describe V1::FeaturesController, :type => :api do
           # --------------- #
 
           it "should return 10 results for the first page with per_page param" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
+            custom_sign_in @admin
             get :index, format: :json, :per_page => 10
             expect(JSON.parse(response.body)['data'].length).to eq(10)
           end
@@ -425,9 +490,7 @@ describe V1::FeaturesController, :type => :api do
           # --------------- #
 
           it "should return 9 results for the third page with per_page param" do
-            sign_in @user
-            request.headers.merge!(@user.create_new_auth_token)
-
+            custom_sign_in @admin
             get :index, format: :json, :per_page => 10, :page => 3
             expect(JSON.parse(response.body)['data'].length).to eq(9)
           end
@@ -439,9 +502,7 @@ describe V1::FeaturesController, :type => :api do
         context "order by" do
           context "name" do
             it "should return user with name of 'a' for first result when ordering by name asc" do
-              sign_in @user
-              request.headers.merge!(@user.create_new_auth_token)
-
+              custom_sign_in @admin
               get :index, format: :json, :order_by => "name", :order_direction => "ASC"
               expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("a")
             end
@@ -449,9 +510,7 @@ describe V1::FeaturesController, :type => :api do
             # --------------- #
 
             it "should return user with name of 'z' for first result when ordering by name desc" do
-              sign_in @user
-              request.headers.merge!(@user.create_new_auth_token)
-
+              custom_sign_in @admin
               get :index, format: :json, :order_by => "name", :order_direction => "DESC"
               expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("z")
             end
@@ -518,7 +577,7 @@ describe V1::FeaturesController, :type => :api do
   describe "#update" do
     context "response status" do
       context "authentication" do
-        it "should return a status of 422 if user is not logged in" do
+        it "should return a status of 422 if no one is not logged in" do
           feature4 = FactoryGirl.create(:feature)
           put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}
           expect(response.status).to eq(401)
@@ -527,9 +586,27 @@ describe V1::FeaturesController, :type => :api do
 
         # --------------- #
 
-        it "should return a status of 200 if user is logged in" do
-          sign_in @user
-          request.headers.merge!(@user.create_new_auth_token)
+        it "should return a status of 422 if user is logged in" do
+          custom_sign_in @user
+          feature4 = FactoryGirl.create(:feature)
+          put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}
+          expect(response.status).to eq(401)
+          feature4.destroy
+        end
+
+        # --------------- #
+
+        it "should return a status of 422 if employee is logged in" do
+          custom_sign_in @employee
+          feature4 = FactoryGirl.create(:feature)
+          put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}
+          expect(response.status).to eq(401)
+          feature4.destroy
+        end
+
+        # --------------- #
+        it "should return a status of 200 if admin is logged in" do
+          custom_sign_in @admin
           feature4 = FactoryGirl.create(:feature)
           put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}
           expect(response.status).to eq(200)
@@ -543,9 +620,7 @@ describe V1::FeaturesController, :type => :api do
 
     context "no record" do
       it "should return a status of 422 if record cant be found" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
-
+        custom_sign_in @admin
         #NOTE: this is due to the user model having a feature record (must add 2 - not 1)
         put :update, format: :json, :id => @feature3.id + 2, :feature => {:name => "test"}
         expect(response.status).to eq(422)
@@ -557,8 +632,7 @@ describe V1::FeaturesController, :type => :api do
 
     context "validations" do
       it "should return a status of 422 if feature name has already been taken" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         feature4 = FactoryGirl.create(:feature)
         put :update, format: :json, :id => feature4.id, :feature => {:name => @feature1.name.to_s}
         expect(response.status).to eq(422)
@@ -568,8 +642,7 @@ describe V1::FeaturesController, :type => :api do
       # --------------- #
 
       it "should return a status of 422 if feature name is blank" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         feature4 = FactoryGirl.create(:feature)
         put :update, format: :json, :id => feature4.id, :feature => {:name => ""}
         expect(response.status).to eq(422)
@@ -583,8 +656,7 @@ describe V1::FeaturesController, :type => :api do
     context "response data" do
       context "no record" do
         it "should return the correct error response if the feature id can't be found" do
-          sign_in @user
-          request.headers.merge!(@user.create_new_auth_token)
+          custom_sign_in @admin
           #NOTE: this is due to the user model having a feature record
           put :update, format: :json, :id => @feature3.id + 2, :feature => {:name => "test"}
           expect(JSON.parse(response.body)['errors'].to_s).to eq("The feature with id #{@feature3.id + 2} could not be found.")
@@ -595,7 +667,27 @@ describe V1::FeaturesController, :type => :api do
       # ------------------------------ #
 
       context "authentication" do
-        it "should return - Authorized users only. - if user is not logged in" do
+        it "should return - Authorized users only. - if no one is not logged in" do
+          feature4 = FactoryGirl.create(:feature)
+          put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+          feature4.destroy
+        end
+
+        # --------------- #
+
+        it "should return - Authorized users only. - if user is logged in" do
+          custom_sign_in @user
+          feature4 = FactoryGirl.create(:feature)
+          put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+          feature4.destroy
+        end
+
+        # --------------- #
+
+        it "should return - Authorized users only. - if employee is logged in" do
+          custom_sign_in @employee
           feature4 = FactoryGirl.create(:feature)
           put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}
           expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
@@ -605,8 +697,7 @@ describe V1::FeaturesController, :type => :api do
         # --------------- #
 
         it "should return data of the updated feature if no validation errors and user logged in" do
-          sign_in @user
-          request.headers.merge!(@user.create_new_auth_token)
+          custom_sign_in @admin
           feature4 = FactoryGirl.create(:feature)
           put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}
           expect(JSON.parse(response.body)['data']['name'].to_s).to eq("test")
@@ -620,8 +711,7 @@ describe V1::FeaturesController, :type => :api do
 
       context "messages" do
         it "should return Name Can't be blank if name is blank" do
-          sign_in @user
-          request.headers.merge!(@user.create_new_auth_token)
+          custom_sign_in @admin
           feature4 = FactoryGirl.create(:feature)
           put :update, format: :json, :id => feature4.id, :feature => {:name => ""}
           expect(JSON.parse(response.body)['errors'].to_s).to include("Name can't be blank")
@@ -631,8 +721,7 @@ describe V1::FeaturesController, :type => :api do
         # --------------- #
 
         it "should return Name is already taken if name has already been taken" do
-          sign_in @user
-          request.headers.merge!(@user.create_new_auth_token)
+          custom_sign_in @admin
           feature4 = FactoryGirl.create(:feature)
           put :update, format: :json, :id => feature4.id, :feature => {:name => @feature1.name.to_s}
           expect(JSON.parse(response.body)['errors'].to_s).to include("Name has already been taken")
@@ -646,8 +735,7 @@ describe V1::FeaturesController, :type => :api do
 
     context "db creation" do
       it "should not create or delete a record from the db when updating" do
-        sign_in @user
-        request.headers.merge!(@user.create_new_auth_token)
+        custom_sign_in @admin
         feature4 = FactoryGirl.create(:feature)
         expect {put :update, format: :json, :id => feature4.id, :feature => {:name => "test"}}.to change(Feature, :count).by(0)
         feature4.destroy

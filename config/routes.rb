@@ -1,14 +1,14 @@
 Rails.application.routes.draw do
-  mount_devise_token_auth_for 'User', at: 'auth'
-  as :auth do
+  mount_devise_token_auth_for 'User', at: 'user_auth'
+  as :user_auth do
   end
 
-  mount_devise_token_auth_for 'Admin', at: 'admin'
-  as :admin do
+  mount_devise_token_auth_for 'Admin', at: 'admin_auth'
+  as :admin_auth do
   end
 
-  mount_devise_token_auth_for 'Employee', at: 'employee'
-  as :employee do
+  mount_devise_token_auth_for 'Employee', at: 'employee_auth'
+  as :employee_auth do
   end
 
   namespace :v1 do

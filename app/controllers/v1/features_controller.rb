@@ -1,7 +1,7 @@
 class V1::FeaturesController < ApplicationController
   respond_to :json
   before_filter :set_params, :only => [:index]
-  before_action :authenticate_user!, :only => [:create, :update, :destroy], :unless => :master_api_key?
+  before_action :authenticate_admin!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create
     feature = Feature.new(feature_params)
