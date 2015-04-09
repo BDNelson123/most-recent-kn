@@ -6,6 +6,21 @@
 #   cities = City.create([{ name: 'Chicago' }, { name: 'Copenhagen' }])
 #   Mayor.create(name: 'Emanuel', city: cities.first)
 
+BayType.create!([
+  {id: 1, name: "standard"},
+  {id: 2, name: "coaching"},
+  {id: 3, name: "suite"},
+  {id: 4, name: "jumbo"}
+])
+
+BayStatus.create!([
+  {id: 1, name: "service", description: "Out of operation, requiring service/maintenance/setup"},
+  {id: 2, name: "available", description: "Not currently in use, available for play"},
+  {id: 3, name: "reserved", description: "Assigned to players, awaiting their check in"},
+  {id: 4, name: "occupied", description: "Currently in use, players in the bay"},
+  {id: 5, name: "bussing", description: "Being cleaned after players have left the bay"}
+])
+
 Club.create!([
   {id: 1, name: "Adams Golf"},
   {id: 2, name: "Ben Hogan"},

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150408190933) do
+ActiveRecord::Schema.define(version: 20150409150837) do
 
   create_table "admins", force: :cascade do |t|
     t.string   "provider",               limit: 255,                null: false
@@ -43,23 +43,37 @@ ActiveRecord::Schema.define(version: 20150408190933) do
   add_index "admins", ["uid", "provider"], name: "index_admins_on_uid_and_provider", unique: true, using: :btree
 
   create_table "assignments", force: :cascade do |t|
-    t.integer  "bay_id",         limit: 4
-    t.integer  "user_id",        limit: 4
-    t.decimal  "rate",                     precision: 10
-    t.integer  "credits",        limit: 4
+    t.integer  "bay_id",           limit: 4
+    t.integer  "user_id",          limit: 4
+    t.integer  "credits_per_hour", limit: 4
     t.datetime "check_in_at"
-    t.time     "time_remaining"
-    t.datetime "created_at",                              null: false
-    t.datetime "updated_at",                              null: false
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+    t.datetime "check_out_at"
+    t.integer  "status_id",        limit: 4
+  end
+
+  create_table "bay_statuses", force: :cascade do |t|
+    t.string   "name",        limit: 255
+    t.string   "description", limit: 255
+    t.datetime "created_at",              null: false
+    t.datetime "updated_at",              null: false
+  end
+
+  create_table "bay_types", force: :cascade do |t|
+    t.string   "name",             limit: 255
+    t.string   "description",      limit: 255
+    t.integer  "credits_per_hour", limit: 4
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
   end
 
   create_table "bays", force: :cascade do |t|
-    t.string   "kind",       limit: 255
-    t.string   "state",      limit: 255
-    t.datetime "created_at",                            null: false
-    t.datetime "updated_at",                            null: false
-    t.decimal  "rate",                   precision: 10
-    t.integer  "floor",      limit: 4
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+    t.integer  "bay_type_id",    limit: 4
+    t.integer  "status_type_id", limit: 4
+    t.string   "number",         limit: 255
   end
 
   create_table "clubs", force: :cascade do |t|
@@ -143,12 +157,6 @@ ActiveRecord::Schema.define(version: 20150408190933) do
     t.datetime "created_at",                                      null: false
     t.datetime "updated_at",                                      null: false
     t.integer  "credits",     limit: 4
-  end
-
-  create_table "roles", force: :cascade do |t|
-    t.string   "name",       limit: 255
-    t.datetime "created_at",             null: false
-    t.datetime "updated_at",             null: false
   end
 
   create_table "users", force: :cascade do |t|
