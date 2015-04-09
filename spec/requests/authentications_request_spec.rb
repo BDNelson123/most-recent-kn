@@ -30,7 +30,7 @@ describe "user authentication", :type => :request do
   # this action is in the devise_token_auth registrations controller
   describe "#create" do
     it "create a user but not send back token b/c user has to be confirmed with email address" do
-      post = post '/auth', @user_create_hash
+      post = post '/user_auth', @user_create_hash
       expect(response.status).to eq(200)
       expect(JSON.parse(response.body)["status"]).to eq("success")
       expect(JSON.parse(response.body)["data"]["id"]).to eq(User.last.id)
