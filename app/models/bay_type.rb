@@ -1,4 +1,6 @@
 class BayType < ActiveRecord::Base
+  include ActiveRecordBaseExtensionScope
+
   has_many :bays
 
   validates :name, :presence => true
@@ -10,7 +12,8 @@ class BayType < ActiveRecord::Base
 
   scope :search_attributes, -> (params) { 
     if params[:search] != nil
-      return where("clubs.name LIKE ?", "%#{params[:search]}%")
+      return where("bay_types.name LIKE ? OR bay_types.description LIKE ? OR bay_types.credits_per_hour LIKE ?", "%#{params[:search]}%", "%#{params[:search]}%", "%#{params[:search]}%")
     end
     nil
+  }
 end

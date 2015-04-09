@@ -1,3 +1,4 @@
 class Bay < ActiveRecord::Base
-  belongs_to :user
+  belongs_to :bay_type
+  belongs_to :bay_status
 end

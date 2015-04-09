@@ -14,6 +14,8 @@ Rails.application.routes.draw do
   namespace :v1 do
     resources :assignments
     resources :bays
+    resources :bay_statuses
+    resources :bay_types
     resources :clubs
     resources :courses
     resources :features

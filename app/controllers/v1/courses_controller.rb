@@ -13,12 +13,6 @@ class V1::CoursesController < ApplicationController
     end
   end
 
-  def index
-    render :json => { :data => Course.search_attributes(params).main_index(params) }, :status => 200
-  rescue ActiveRecord::StatementInvalid => error
-    render :json => { :errors => "Your query is invalid." }, :status => 422
-  end
-
   def destroy
     course = Course.find_by_id(params[:id])
 
@@ -28,6 +22,12 @@ class V1::CoursesController < ApplicationController
       course.destroy
       render :json => { :data => "The course with id #{params[:id]} has been deleted." }, :status => 202
     end
+  end
+
+  def index
+    render :json => { :data => Course.search_attributes(params).main_index(params) }, :status => 200
+  rescue ActiveRecord::StatementInvalid => error
+    render :json => { :errors => "Your query is invalid." }, :status => 422
   end
 
   def show
