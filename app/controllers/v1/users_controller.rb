@@ -1,7 +1,11 @@
 class V1::UsersController < ApplicationController
   respond_to :json
+  devise_token_auth_group :all, contains: [:employee, :admin, :user]
+  devise_token_auth_group :employee_admin, contains: [:employee, :admin]
   before_filter :set_params, :only => [:index]
-  before_action :authenticate_user!, :only => [:index, :show, :destroy], :unless => :master_api_key?
+  before_action :authenticate_admin!, :only => [:destroy], :unless => :master_api_key?
+  before_action -> { custom_authenticate_member(current_all) }, only: [:show]
+  before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:index]
 
   def index
     render :json => { :data => User.user_join.search_attributes(params).user_group(params).main_index(params) }, :status => 200
