@@ -6,7 +6,9 @@ class Bay < ActiveRecord::Base
 
   validates :number, :presence => true
   validates :bay_type_id, :presence => true
+  validates_model_id :bay_type_id, :message => "must be a valid bay type", :model => BayType
   validates :bay_status_id, :presence => true
+  validates_model_id :bay_status_id, :message => "must be a valid bay status", :model => BayStatus
 
   scope :common_attributes, -> { select('bays.id, bays.number, bay_statuses.name as status_name, bay_statuses.description as status_description, bay_types.name as type_name, bay_types.description as type_description, bay_types.credits_per_hour as type_credit')}
 
