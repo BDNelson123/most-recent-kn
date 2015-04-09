@@ -1,7 +1,7 @@
 class V1::BaysController < ApplicationController
   respond_to :json
-  before_filter :set_params, :only => [:index]
   devise_token_auth_group :all, contains: [:user, :employee, :admin]
+  before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :destroy, :update], :unless => :master_api_key?
   before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
 
@@ -58,7 +58,7 @@ class V1::BaysController < ApplicationController
 
   def bay_params
     _params = params.require(:bay).permit(
-      :name, :description, :price, :credits, :featurizations_attributes => [:feature_id]
+      :number, :bay_status_id, :bay_type_id 
     )
   end
 end
