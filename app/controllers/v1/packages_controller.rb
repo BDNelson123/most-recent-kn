@@ -1,11 +1,9 @@
 class V1::PackagesController < ApplicationController
   respond_to :json
-  devise_token_auth_group :member, contains: [:user, :employee, :admin]
+  devise_token_auth_group :all, contains: [:user, :employee, :admin]
   before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :destroy, :update], :unless => :master_api_key?
-  before_action only: [:index, :show] do
-    custom_authenticate_member(current_member)
-  end
+  before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
 
   def create
     package = Package.new(package_params)
