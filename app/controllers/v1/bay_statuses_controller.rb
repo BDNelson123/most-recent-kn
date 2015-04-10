@@ -1,6 +1,7 @@
 class V1::BayStatusesController < ApplicationController
   respond_to :json
   before_filter :set_params, :only => [:index]
+  before_action :authenticate_admin!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create
     status = BayStatus.new(status_params)
@@ -54,7 +55,7 @@ class V1::BayStatusesController < ApplicationController
   private
 
   def status_params
-    _params = params.require(:status).permit(
+    _params = params.require(:bay_status).permit(
       :name, :description
     )
   end
