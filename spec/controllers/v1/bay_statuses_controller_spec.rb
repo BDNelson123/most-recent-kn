@@ -43,7 +43,7 @@ describe V1::BayStatusesController, :type => :api do
       end
 
       # --------------- #
-      it "should return a response status of 201 if user is logged in" do
+      it "should return a response status of 201 if admin is logged in" do
         custom_sign_in @admin
         post :create, format: :json, :bay_status => {:name => "test name", :description => "test description"}
         expect(response.status).to eq(201)

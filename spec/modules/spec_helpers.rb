@@ -2,8 +2,8 @@ module SpecHelpers
   def delete_factories
     Admin.destroy_all
     Bay.destroy_all
+    BayKind.destroy_all
     BayStatus.destroy_all
-    BayType.destroy_all
     Club.destroy_all
     Course.destroy_all
     Employee.destroy_all
@@ -22,6 +22,12 @@ module SpecHelpers
     @user = FactoryGirl.create(:user, :wood_club_id => @club.id, :iron_club_id => @club.id, :level_id => @level.id, :income_id => @income.id)
     @admin = FactoryGirl.create(:admin)
     @employee = FactoryGirl.create(:employee)
+  end
+
+  def create_bay
+    @bay_status = FactoryGirl.create(:bay_status)
+    @bay_kind = FactoryGirl.create(:bay_kind)
+    @bay = FactoryGirl.create(:bay, :bay_status_id => @bay_status.id, :bay_kind_id => @bay_kind.id)
   end
 
   def custom_sign_in(model)
