@@ -1,12 +1,12 @@
 class ApplicationController < ActionController::Base
+  respond_to :json
   include DeviseTokenAuth::Concerns::SetUserByToken
   protect_from_forgery with: :null_session, if: Proc.new { |c| c.request.format == 'application/json' }
   before_action :configure_permitted_parameters, if: :devise_controller?
-  respond_to :json
 
   protected
 
-  # basically devise strong parameters
+  # devise strong parameters for sign_up
   def configure_permitted_parameters
     devise_parameter_sanitizer.for(:sign_up) << [
       :name, :address, :address2, :city, :state, :zip, 
@@ -28,6 +28,7 @@ class ApplicationController < ActionController::Base
     params[:order_direction] ||= "ASC"
   end
 
+  # hack for devise groups
   def custom_authenticate_member(current_member)
     if current_member == nil && params[:master_api_key] != "thisisatest" 
       render :json => { :errors => ["Authorized users only."] }, status: 401	
