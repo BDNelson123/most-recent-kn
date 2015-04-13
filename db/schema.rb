@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150409191314) do
+ActiveRecord::Schema.define(version: 20150413143607) do
 
   create_table "admins", force: :cascade do |t|
     t.string   "provider",               limit: 255,                null: false
@@ -53,14 +53,7 @@ ActiveRecord::Schema.define(version: 20150409191314) do
     t.integer  "status_id",        limit: 4
   end
 
-  create_table "bay_statuses", force: :cascade do |t|
-    t.string   "name",        limit: 255
-    t.string   "description", limit: 255
-    t.datetime "created_at",              null: false
-    t.datetime "updated_at",              null: false
-  end
-
-  create_table "bay_types", force: :cascade do |t|
+  create_table "bay_kinds", force: :cascade do |t|
     t.string   "name",             limit: 255
     t.string   "description",      limit: 255
     t.integer  "credits_per_hour", limit: 4
@@ -68,10 +61,17 @@ ActiveRecord::Schema.define(version: 20150409191314) do
     t.datetime "updated_at",                   null: false
   end
 
+  create_table "bay_statuses", force: :cascade do |t|
+    t.string   "name",        limit: 255
+    t.string   "description", limit: 255
+    t.datetime "created_at",              null: false
+    t.datetime "updated_at",              null: false
+  end
+
   create_table "bays", force: :cascade do |t|
     t.datetime "created_at",                null: false
     t.datetime "updated_at",                null: false
-    t.integer  "bay_type_id",   limit: 4
+    t.integer  "bay_kind_id",   limit: 4
     t.integer  "bay_status_id", limit: 4
     t.string   "number",        limit: 255
   end

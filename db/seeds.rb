@@ -6,11 +6,11 @@
 #   cities = City.create([{ name: 'Chicago' }, { name: 'Copenhagen' }])
 #   Mayor.create(name: 'Emanuel', city: cities.first)
 
-BayType.create!([
-  {id: 1, name: "standard"},
-  {id: 2, name: "coaching"},
-  {id: 3, name: "suite"},
-  {id: 4, name: "jumbo"}
+BayKind.create!([
+  {id: 1, name: "standard", description: "n/a", credits_per_hour: 1},
+  {id: 2, name: "coaching", description: "n/a", credits_per_hour: 1},
+  {id: 3, name: "suite", description: "n/a", credits_per_hour: 1},
+  {id: 4, name: "jumbo", description: "n/a", credits_per_hour: 1}
 ])
 
 BayStatus.create!([
