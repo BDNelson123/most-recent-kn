@@ -13,6 +13,7 @@ class User < ActiveRecord::Base
   belongs_to :wood_club, class_name: "Club", foreign_key: :wood_club_id
   belongs_to :iron_club, class_name: "Club", foreign_key: :iron_club_id
   belongs_to :income
+  has_many :assignments
 
   validates :name, :presence => true
   validates :address, :presence => true
@@ -48,16 +49,6 @@ class User < ActiveRecord::Base
     ')
   }
 
-  scope :user_join, -> { joins(:level,:income,"
-      JOIN clubs iron_club ON users.iron_club_id = iron_club.id 
-      JOIN clubs wood_club ON users.wood_club_id = wood_club.id 
-      LEFT JOIN courses ON users.course_id = courses.id
-      LEFT JOIN packages ON users.package_id = packages.id
-      LEFT JOIN featurizations ON users.package_id = featurizations.id 
-      LEFT JOIN features ON featurizations.feature_id = features.id
-    ")
-  }
-
   scope :search_attributes, -> (params) { 
     if params[:search] != nil
       return where("
@@ -71,6 +62,16 @@ class User < ActiveRecord::Base
       )
     end
     nil
+  }
+
+  scope :user_join, -> { joins(:level,:income,"
+      JOIN clubs iron_club ON users.iron_club_id = iron_club.id 
+      JOIN clubs wood_club ON users.wood_club_id = wood_club.id 
+      LEFT JOIN courses ON users.course_id = courses.id
+      LEFT JOIN packages ON users.package_id = packages.id
+      LEFT JOIN featurizations ON users.package_id = featurizations.id 
+      LEFT JOIN features ON featurizations.feature_id = features.id
+    ")
   }
 
   scope :user_group, -> (params) { 

@@ -3,6 +3,7 @@ class Bay < ActiveRecord::Base
 
   belongs_to :bay_kind
   belongs_to :bay_status
+  has_many :assignments
 
   validates :number, :presence => true
   validates_uniqueness_of :number, :case_sensitive => false
