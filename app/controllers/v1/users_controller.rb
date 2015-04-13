@@ -1,5 +1,4 @@
 class V1::UsersController < ApplicationController
-  respond_to :json
   devise_token_auth_group :all, contains: [:employee, :admin, :user]
   devise_token_auth_group :employee_admin, contains: [:employee, :admin]
   before_filter :set_params, :only => [:index]

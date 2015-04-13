@@ -1,5 +1,4 @@
 class V1::PackagesController < ApplicationController
-  respond_to :json
   devise_token_auth_group :all, contains: [:user, :employee, :admin]
   before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :destroy, :update], :unless => :master_api_key?

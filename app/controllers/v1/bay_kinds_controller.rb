@@ -1,5 +1,4 @@
 class V1::BayKindsController < ApplicationController
-  respond_to :json
   before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :destroy, :update], :unless => :master_api_key?
 
