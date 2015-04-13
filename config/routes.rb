@@ -15,7 +15,7 @@ Rails.application.routes.draw do
     resources :assignments
     resources :bays
     resources :bay_statuses
-    resources :bay_types
+    resources :bay_kinds
     resources :clubs
     resources :courses
     resources :features
