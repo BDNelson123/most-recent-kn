@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150413143607) do
+ActiveRecord::Schema.define(version: 20150416192958) do
 
   create_table "admins", force: :cascade do |t|
     t.string   "provider",               limit: 255,                null: false
@@ -50,7 +50,7 @@ ActiveRecord::Schema.define(version: 20150413143607) do
     t.datetime "created_at",                 null: false
     t.datetime "updated_at",                 null: false
     t.datetime "check_out_at"
-    t.integer  "status_id",        limit: 4
+    t.integer  "parent_id",        limit: 4
   end
 
   create_table "bay_kinds", force: :cascade do |t|
@@ -74,6 +74,7 @@ ActiveRecord::Schema.define(version: 20150413143607) do
     t.integer  "bay_kind_id",   limit: 4
     t.integer  "bay_status_id", limit: 4
     t.string   "number",        limit: 255
+    t.integer  "floor",         limit: 4
   end
 
   create_table "clubs", force: :cascade do |t|
@@ -159,6 +160,16 @@ ActiveRecord::Schema.define(version: 20150413143607) do
     t.integer  "credits",     limit: 4
   end
 
+  create_table "reservations", force: :cascade do |t|
+    t.integer  "user_id",      limit: 4
+    t.integer  "bay_id",       limit: 4
+    t.integer  "parent_id",    limit: 4
+    t.datetime "check_in_at"
+    t.datetime "check_out_at"
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
   create_table "users", force: :cascade do |t|
     t.string   "provider",               limit: 255,                null: false
     t.string   "uid",                    limit: 255,   default: "", null: false
@@ -205,5 +216,15 @@ ActiveRecord::Schema.define(version: 20150413143607) do
   add_index "users", ["email"], name: "index_users_on_email", using: :btree
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
   add_index "users", ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true, using: :btree
+
+  create_table "waitings", force: :cascade do |t|
+    t.integer  "user_id",          limit: 4
+    t.integer  "bay_kind_id",      limit: 4
+    t.integer  "preference_floor", limit: 4
+    t.integer  "preference_bay",   limit: 4
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+    t.integer  "parent_id",        limit: 4
+  end
 
 end

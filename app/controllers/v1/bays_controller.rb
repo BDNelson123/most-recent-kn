@@ -8,7 +8,7 @@ class V1::BaysController < ApplicationController
     bay = Bay.new(bay_params)
 
     if bay.save
-      render :json => { :data => Bay.joins(:bay_status, :bay_type).common_attributes.find_by_id(bay.id) }, :status => 201
+      render :json => { :data => Bay.joins(:bay_status, :bay_kind).common_attributes.find_by_id(bay.id) }, :status => 201
     else
       render :json => { :errors => bay.errors.full_messages.to_sentence }, :status => 422
     end
@@ -26,13 +26,13 @@ class V1::BaysController < ApplicationController
   end
 
   def index
-    render :json => { :data => Bay.joins(:bay_status, :bay_type).search_attributes(params).main_index(params) }, :status => 200
+    render :json => { :data => Bay.joins(:bay_status, :bay_kind).search_attributes(params).main_index(params) }, :status => 200
   rescue ActiveRecord::StatementInvalid => error
     render :json => { :errors => "Your query is invalid." }, :status => 422
   end
 
   def show
-    bay = Bay.joins(:bay_status, :bay_type).common_attributes.find_by_id(params[:id])
+    bay = Bay.joins(:bay_status, :bay_kind).common_attributes.find_by_id(params[:id])
 
     if bay.id != nil
       render :json => { :data => bay }, :status => 200
@@ -57,7 +57,7 @@ class V1::BaysController < ApplicationController
 
   def bay_params
     _params = params.require(:bay).permit(
-      :number, :bay_status_id, :bay_type_id 
+      :number, :floor, :bay_status_id, :bay_kind_id
     )
   end
 end

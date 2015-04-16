@@ -23,5 +23,6 @@ Rails.application.routes.draw do
     resources :levels
     resources :packages
     resources :users
+    resources :waitings
   end
 end
