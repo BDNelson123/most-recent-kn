@@ -6,32 +6,35 @@ class Assignment < ActiveRecord::Base
   belongs_to :user
   belongs_to :parent, class_name: "Assignment"
   has_many :assignments, class_name: "Assignment", foreign_key: :parent_id
+  before_save :delete_assignments_for_user_before_creating_new_one
 
   validates :bay_id, :presence => true
-  validates_uniqueness_of :bay_id
   validates :user_id, :presence => true
   validates :credits_per_hour, :presence => true
   validates :check_in_at, :presence => true
   validates :check_out_at, :presence => true
-  validates_model_id :bay_id, :message => "must be a valid bay", :model => Bay
-  validates_model_id :user_id, :message => "must be a valid user", :model => User
+  validates_uniqueness_of :bay_id
+  validates_uniqueness_of :user_id
+  validates_model_id :bay_id, :message => "must be a valid bay", :model => Bay, :if => :bay_id?
+  validates_model_id :user_id, :message => "must be a valid user", :model => User, :if => :user_id?
   validates_model_id :parent_id, :message => "must be a valid assignment", :model => Assignment, :if => :parent_id?
-  validate :check_out_date_before_check_in_date
-  validate :check_out_date_length
-  validate :check_in_past
-  validate :check_out_past
+  validate :check_out_date_before_check_in_date, :if => lambda { |t| t.check_in_at? && t.check_out_at? }
+  validate :check_out_date_length, :if => lambda { |t| t.check_in_at? && t.check_out_at? }
+  validate :check_in_past, :if => :check_in_at?
+  validate :check_out_past, :if => :check_out_at?
 
   scope :common_attributes, -> { 
     select('
       assignments.id, 
       assignments.bay_id,
+      assignments.user_id,
       assignments.credits_per_hour as assignments_credits_per_hour,
       assignments.check_in_at,
       assignments.check_out_at,
-      bays.number as bays_number, 
-      bay_kinds.name as bay_kinds_name, 
+      bays.number as bays_number,
+      bay_kinds.name as bay_kinds_name,
       bay_kinds.description as bay_kinds_description,
-      bay_statuses.name as bay_statuses_name, 
+      bay_statuses.name as bay_statuses_name,
       bay_statuses.description as bay_statuses_description,
       users.name as users_name,
       users.email as users_email
@@ -61,4 +64,11 @@ class Assignment < ActiveRecord::Base
     end
     nil
   }
+
+  private
+
+  # makes sure to delete any assignment for a user before creating a new one
+  def delete_assignments_for_user_before_creating_new_one
+    Assignment.where(['user_id = ? AND bay_id <> ?', self.user_id, self.bay_id]).destroy_all
+  end
 end

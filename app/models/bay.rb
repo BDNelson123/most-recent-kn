@@ -6,6 +6,7 @@ class Bay < ActiveRecord::Base
   has_many :assignments
 
   validates :floor, :presence => true
+  validates :floor, :inclusion => {:in => [1, 2, 3], :message => "must be 1, 2, or 3"}
   validates :number, :presence => true
   validates_uniqueness_of :number, :case_sensitive => false, :scope => :floor
   validates :bay_kind_id, :presence => true

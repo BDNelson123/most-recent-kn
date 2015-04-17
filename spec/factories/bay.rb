@@ -4,6 +4,7 @@ require 'faker'
 FactoryGirl.define do
   factory :bay do
     number { Faker::Address.building_number }
+    floor 1
     bay_kind_id { Faker::Number.number(2) }
     bay_status_id { Faker::Number.number(2) }
   end

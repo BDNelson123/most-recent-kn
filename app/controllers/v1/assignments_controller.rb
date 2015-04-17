@@ -1,7 +1,9 @@
 class V1::AssignmentsController < ApplicationController
-  devise_token_auth_group :all, contains: [:user, :employee, :admin]
   before_filter :set_params, :only => [:index]
+  devise_token_auth_group :all, contains: [:user, :employee, :admin]
+  devise_token_auth_group :employee_admin, contains: [:employee, :admin]
   before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
+  before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:create, :update]
 
   def create
     assignment = Assignment.new(assignment_params)
@@ -45,7 +47,7 @@ class V1::AssignmentsController < ApplicationController
 
   def assignment_params
     _params = params.require(:assignment).permit(
-      :bay_id, :user_id, :credits_per_hour, :check_in_at, :check_out_at, :status_id
+      :bay_id, :user_id, :credits_per_hour, :check_in_at, :check_out_at, :parent_id
     )
   end
 end
