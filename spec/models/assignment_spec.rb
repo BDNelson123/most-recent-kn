@@ -28,10 +28,10 @@ describe Assignment do
     end
 
     context "errors" do
-      it "should return two errors for bay presence and valid bay" do
+      it "should return one error for bay being blank" do
         create_user_bay
         assignment = FactoryGirl.build(:assignment, :bay_id => nil, :user_id => @user.id)
-        assignment.should have(2).error_on(:bay_id)
+        assignment.should have(1).error_on(:bay_id)
       end
 
       it "should return one error for credits_per_hour presence" do

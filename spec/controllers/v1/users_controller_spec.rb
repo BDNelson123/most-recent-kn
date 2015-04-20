@@ -427,7 +427,7 @@ describe V1::UsersController, :type => :api do
           context "user_name" do
             it "should return user with name of 'a' for first result when ordering by name asc" do
               custom_sign_in @admin
-              get :index, format: :json, :order_by => "name", :order_direction => "ASC"
+              get :index, format: :json, :order_by => "users.name", :order_direction => "ASC"
               expect(JSON.parse(response.body)["data"][0]["user_name"].downcase).to start_with("a")
             end
 
@@ -435,7 +435,7 @@ describe V1::UsersController, :type => :api do
 
             it "should return user with name of 'z' for first result when ordering by name desc" do
               custom_sign_in @admin
-              get :index, format: :json, :order_by => "name", :order_direction => "DESC"
+              get :index, format: :json, :order_by => "users.name", :order_direction => "DESC"
               expect(JSON.parse(response.body)["data"][0]["user_name"].downcase).to start_with("z")
             end
           end
