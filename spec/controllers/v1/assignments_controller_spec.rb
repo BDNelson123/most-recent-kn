@@ -419,6 +419,127 @@ describe V1::AssignmentsController do
   # --------------------------------------------- #
   # --------------------------------------------- #
 
+  # DESTROY action tests
+  describe "#destroy" do
+    before(:each) do
+      @assignment_delete = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+    end
+
+    after(:each) do
+      @assignment_delete.destroy
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "authentication & response status" do
+      it "should return a response status of 401 if admin is not logged in" do
+        delete :destroy, format: :json, :id => @assignment_delete.id 
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if user is logged in" do
+        custom_sign_in @user
+        delete :destroy, format: :json, :id => @assignment_delete.id 
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 401 if employee is logged in" do
+        custom_sign_in @employee
+        delete :destroy, format: :json, :id => @assignment_delete.id 
+        expect(response.status).to eq(202)
+      end
+
+      # --------------- #
+
+      it "should return a response status of 202 if admin is logged in" do
+        custom_sign_in @admin
+        delete :destroy, format: :json, :id => @assignment_delete.id 
+        expect(response.status).to eq(202)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "club record deletion" do
+      it "should remove record from db" do
+        custom_sign_in @admin
+        expect {delete :destroy, format: :json, :id => @assignment_delete.id}.to change(Assignment, :count).by(-1)
+      end
+
+      # --------------- #
+
+      it "should not delete record from db - not signed in" do
+        expect {delete :destroy, format: :json, :id => @assignment_delete.id}.to change(Assignment, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not delete record from db - user signed in" do
+        custom_sign_in @user
+        expect {delete :destroy, format: :json, :id => @assignment_delete.id}.to change(Assignment, :count).by(0)
+      end
+
+      # --------------- #
+
+      it "should not delete record from db - employee signed in" do
+        custom_sign_in @employee
+        expect {delete :destroy, format: :json, :id => @assignment_delete.id}.to change(Assignment, :count).by(-1)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "correct response body" do
+      it "should send back validation that user is not authorized - not logged in" do
+        delete :destroy, format: :json, :id => @assignment_delete.id 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that user is not authorized - user logged in" do
+        custom_sign_in @user
+        delete :destroy, format: :json, :id => @assignment_delete.id 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that record has been deleted - employee logged in" do
+        custom_sign_in @employee
+        delete :destroy, format: :json, :id => @assignment_delete.id 
+        expect(JSON.parse(response.body)['data'].to_s).to include("The assignment with id #{@assignment_delete.id} has been deleted.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that record has been deleted - admin logged in" do
+        custom_sign_in @admin
+        delete :destroy, format: :json, :id => @assignment_delete.id 
+        expect(JSON.parse(response.body)['data'].to_s).to include("The assignment with id #{@assignment_delete.id} has been deleted.")
+      end
+
+      # --------------- #
+
+      it "should send back validation that record has been deleted" do
+        custom_sign_in @admin
+        delete :destroy, format: :json, :id => @assignment_delete.id + 10 
+        expect(JSON.parse(response.body)['errors'].to_s).to include("The assignment with id #{@assignment_delete.id + 10} could not be found.")
+      end
+    end
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
   # INDEX action tests
   describe "#index" do
     context "authentication" do
@@ -745,6 +866,388 @@ describe V1::AssignmentsController do
             end
           end
         end
+      end
+    end
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
+  # SHOW action tests
+  describe "#show" do
+    context "authentication" do
+      it "should return a response of 401 - no one logged in" do
+        get :show, { 'id' => @assignment1.id }
+        expect(response.status).to eq(401)
+      end
+
+      # --------------- #
+
+      it "should return a response of 200 - user logged in" do
+        custom_sign_in @user
+        get :show, { 'id' => @assignment1.id }
+        expect(response.status).to eq(200)
+      end
+
+      # --------------- #
+
+      it "should return a response of 200 - employee logged in" do
+        custom_sign_in @employee
+        get :show, { 'id' => @assignment1.id }
+        expect(response.status).to eq(200)
+      end
+
+      # --------------- #
+
+      it "should return a response of 200 - admin logged in" do
+        custom_sign_in @admin
+        get :show, { 'id' => @assignment1.id }
+        expect(response.status).to eq(200)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "returned data" do
+      it "should return 13 fields" do
+        custom_sign_in @user
+        get :show, { 'id' => @assignment1.id }
+        expect(JSON.parse(response.body)['data'].length).to eq(13) # 13 fields for one record
+      end
+
+      # --------------- #
+
+      it "should return the correct data for assignment 2" do
+        custom_sign_in @user
+        get :show, { 'id' => @assignment2.id }
+        expect(JSON.parse(response.body)['data']['bay_id'].to_i).to eq(@bay2.id.to_i)
+        expect(JSON.parse(response.body)['data']['user_id'].to_i).to eq(@user2.id.to_i)
+        expect(JSON.parse(response.body)['data']['assignments_credits_per_hour'].to_i).to eq(@assignment2.credits_per_hour.to_i)
+        expect(DateTime.parse(JSON.parse(response.body)['data']['check_in_at'].to_s)).to eq((@assignment2.check_in_at).to_s(:db))
+        expect(DateTime.parse(JSON.parse(response.body)['data']['check_out_at'].to_s)).to eq((@assignment2.check_out_at).to_s(:db))
+        expect(JSON.parse(response.body)['data']['bays_number']).to eq(@bay2.number)
+        expect(JSON.parse(response.body)['data']['bay_kinds_name']).to eq(@bay_kind2.name)
+        expect(JSON.parse(response.body)['data']['bay_kinds_description']).to eq(@bay_kind2.description)
+        expect(JSON.parse(response.body)['data']['bay_statuses_name']).to eq(@bay_status2.name)
+        expect(JSON.parse(response.body)['data']['bay_statuses_description']).to eq(@bay_status2.description)
+        expect(JSON.parse(response.body)['data']['users_name']).to eq(@user2.name)
+        expect(JSON.parse(response.body)['data']['users_email']).to eq(@user2.email)
+      end
+
+      # --------------- #
+
+      it "should return the correct data for assignment2" do
+        custom_sign_in @user
+        get :show, { 'id' => @assignment3.id }
+        expect(JSON.parse(response.body)['data']['bay_id'].to_i).to eq(@bay3.id.to_i)
+        expect(JSON.parse(response.body)['data']['user_id'].to_i).to eq(@user3.id.to_i)
+        expect(JSON.parse(response.body)['data']['assignments_credits_per_hour'].to_i).to eq(@assignment3.credits_per_hour.to_i)
+        expect(DateTime.parse(JSON.parse(response.body)['data']['check_in_at'].to_s)).to eq((@assignment3.check_in_at).to_s(:db))
+        expect(DateTime.parse(JSON.parse(response.body)['data']['check_out_at'].to_s)).to eq((@assignment3.check_out_at).to_s(:db))
+        expect(JSON.parse(response.body)['data']['bays_number']).to eq(@bay3.number)
+        expect(JSON.parse(response.body)['data']['bay_kinds_name']).to eq(@bay_kind3.name)
+        expect(JSON.parse(response.body)['data']['bay_kinds_description']).to eq(@bay_kind3.description)
+        expect(JSON.parse(response.body)['data']['bay_statuses_name']).to eq(@bay_status3.name)
+        expect(JSON.parse(response.body)['data']['bay_statuses_description']).to eq(@bay_status3.description)
+        expect(JSON.parse(response.body)['data']['users_name']).to eq(@user3.name)
+        expect(JSON.parse(response.body)['data']['users_email']).to eq(@user3.email)
+      end
+
+      # --------------- #
+
+      it "should return the correct error if the assignment id can't be found" do
+        custom_sign_in @user
+        get :show, { 'id' => @assignment3.id + 1 }
+        expect(JSON.parse(response.body)['errors'].to_s).to eq("The assignment with id #{@assignment3.id + 1} could not be found.")
+      end
+
+      # --------------- #
+
+      it "should return the correct status if the assignment id can't be found" do
+        custom_sign_in @user
+        get :show, { 'id' => @assignment3.id + 1 }
+        expect(response.status).to eq(422)
+      end
+    end
+  end
+
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+  # --------------------------------------------- #
+
+  # UPDATE action tests
+  describe "#update" do
+    context "response status" do
+      context "authentication" do
+        it "should return a status of 401 if no one is logged in" do
+          assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 2, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(401)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+          assignment.destroy
+        end
+
+        # --------------- #
+
+        it "should return a status of 401 if user is logged in" do
+          custom_sign_in @user
+          assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 2, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(401)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Authorized users only.")
+          assignment.destroy
+        end
+
+        # --------------- #
+
+        it "should return a status of 200 if employee is logged in" do
+          custom_sign_in @employee
+          assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 2, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(200)
+          assignment.destroy
+        end
+
+        # --------------- #
+
+        it "should return a status of 200 if admin is logged in" do
+          custom_sign_in @admin
+          assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 2, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(200)
+          assignment.destroy
+        end
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "no record" do
+      it "should return a status of 422 if record cant be found" do
+        custom_sign_in @employee
+        put :update, format: :json, :id => @assignment3.id + 1, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 2, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "validation errors & response bodies" do
+      it "should return a response status of 422 if record is not updated - no bay_id" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => nil, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Bay can't be blank")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - no bay_id" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => nil, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("User can't be blank")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - no credits_per_hour" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => nil, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Credits per hour can't be blank")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - no check_in_at" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => nil, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Check in at can't be blank")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - no check_out_at" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => nil}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at can't be blank")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - bay uniqueness" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+       put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay1.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Bay has already been taken")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - user uniqueness" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user1.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("User has already been taken")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - bay_id not valid" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay3.id + 1, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Bay must be a valid bay")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - user_id not valid" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user3.id + 1, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("User must be a valid user")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - parent_id not valid" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours, :parent_id => 1}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Parent must be a valid assignment")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - check_in_at being after check_out_at" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 13.hours, :check_out_at => DateTime.now + 12.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be after check in at")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - check_in_at being at same time as check_out_at" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        time = DateTime.now + 12.hours
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => time, :check_out_at => time}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be after check in at")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - check_out_at being more than 12 hours after check_in_at" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 25.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be less than 12 hours after check in at")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - check_in_at being more than one hour in the past" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now - 90.minutes, :check_out_at => DateTime.now + 10.hours}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Check in at cannot be more than one hour in the past")
+        assignment.destroy
+      end
+
+      # --------------- #
+
+      it "should return a response status of 422 if record is not updated - check_out_at being in the past" do
+        custom_sign_in @admin
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute}
+        expect(response.status).to eq(422)
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at cannot be in the past")
+        assignment.destroy
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "response data" do
+      context "no record" do
+        it "should return the correct error response if the assignment id can't be found" do
+          custom_sign_in @admin
+          put :update, format: :json, :id => @assignment3.id + 1, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(JSON.parse(response.body)['errors'].to_s).to eq("The assignment with id #{@assignment3.id + 1} could not be found.")
+        end
+      end
+
+      # ------------------------------ #
+      # ------------------------------ #
+
+      context "correct data" do
+        it "should return data of the updated assignment if no validation errors and user logged in" do
+          custom_sign_in @admin
+          assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          bay = FactoryGirl.create(:bay, :bay_status_id => @bay_status.id, :bay_kind_id => @bay_kind.id)
+          put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(JSON.parse(response.body)['data']['bay_id'].to_i).to eq(bay.id.to_i)
+          expect(JSON.parse(response.body)['data']['user_id'].to_i).to eq(@user.id.to_i)
+          expect(JSON.parse(response.body)['data']['assignments_credits_per_hour'].to_i).to eq(1)
+          expect(JSON.parse(response.body)['data']['bays_number']).to eq(bay.number)
+          expect(JSON.parse(response.body)['data']['bay_kinds_name']).to eq(@bay_kind.name)
+          expect(JSON.parse(response.body)['data']['bay_kinds_description']).to eq(@bay_kind.description)
+          expect(JSON.parse(response.body)['data']['bay_statuses_name']).to eq(@bay_status.name)
+          expect(JSON.parse(response.body)['data']['bay_statuses_description']).to eq(@bay_status.description)
+          expect(JSON.parse(response.body)['data']['users_name']).to eq(@user.name)
+          expect(JSON.parse(response.body)['data']['users_email']).to eq(@user.email)
+          assignment.destroy
+          bay.destroy
+        end
+      end
+    end
+
+    # ------------------------------ #
+    # ------------------------------ #
+
+    context "db creation" do
+      it "should not create or delete a record from the db when updating" do
+        custom_sign_in @employee
+        assignment = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+        expect {put :update, format: :json, :id => assignment.id, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 2, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        assignment.destroy
       end
     end
   end

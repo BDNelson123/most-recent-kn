@@ -6,7 +6,7 @@ class Assignment < ActiveRecord::Base
   belongs_to :user
   belongs_to :parent, class_name: "Assignment"
   has_many :assignments, class_name: "Assignment", foreign_key: :parent_id
-  before_save :delete_assignments_for_user_before_creating_new_one
+  before_create :delete_assignments_for_user_before_creating_new_one
 
   validates :bay_id, :presence => true
   validates :user_id, :presence => true
