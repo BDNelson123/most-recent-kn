@@ -26,4 +26,20 @@ class Bay < ActiveRecord::Base
     end
     nil
   }
+
+  def self.bay_waiting(bay,waiting,status)
+    if status.to_i != 2
+      if waiting.floor != nil && waiting.number != nil && waiting.floor.to_i == bay.floor.to_i && waiting.number.to_i == params[:bay][:number].to_i
+         return true
+      elsif waiting.floor != nil && waiting.number == nil && waiting.floor.to_i == bay.floor.to_i
+        return true
+      elsif waiting.floor == nil && waiting.number == nil
+        return true
+      else
+        return false
+      end
+    else
+      false
+    end
+  end
 end

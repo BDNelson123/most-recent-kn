@@ -1,6 +1,4 @@
 class V1::UsersController < ApplicationController
-  devise_token_auth_group :all, contains: [:employee, :admin, :user]
-  devise_token_auth_group :employee_admin, contains: [:employee, :admin]
   before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:destroy], :unless => :master_api_key?
   before_action -> { custom_authenticate_member(current_all) }, only: [:show]

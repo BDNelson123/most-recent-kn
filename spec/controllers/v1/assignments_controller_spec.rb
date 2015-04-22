@@ -131,7 +131,7 @@ describe V1::AssignmentsController do
         custom_sign_in @admin
         post :create, format: :json, :assignment => {:bay_id => nil, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
         expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Bay can't be blank")
+        expect(JSON.parse(response.body)['errors'].to_s).to include("Please specify a bay_kind_id or a bay_id.")
       end
 
       # --------------- #

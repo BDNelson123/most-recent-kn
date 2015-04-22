@@ -65,6 +65,20 @@ class Assignment < ActiveRecord::Base
     nil
   }
 
+  scope :floor_preference, -> (params) {
+    if params[:floor] != nil
+      return where(:floor => params[:floor])
+    end
+    nil
+  }
+
+  scope :number_preference, -> (params) {
+    if params[:number] != nil
+      return where(:number => params[:number])
+    end
+    nil
+  }
+
   private
 
   # makes sure to delete any assignment for a user before creating a new one

@@ -1,17 +1,21 @@
 class V1::AssignmentsController < ApplicationController
   before_filter :set_params, :only => [:index]
-  devise_token_auth_group :all, contains: [:user, :employee, :admin]
-  devise_token_auth_group :employee_admin, contains: [:employee, :admin]
   before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
   before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:create, :update, :destroy]
 
   def create
     assignment = Assignment.new(assignment_params)
 
-    if assignment.save
-      render :json => { :data => Assignment.assignment_join.common_attributes.find_by_id(assignment.id) }, :status => 201
+    if assignment_params[:bay_kind_id].present?
+      assignment_or_waiting(assignment,assignment_params)
+    elsif assignment_params[:bay_id].present?
+      if assignment.save
+        render :json => { :data => Assignment.assignment_join.common_attributes.find_by_id(assignment.id) }, :status => 201
+      else
+        render :json => { :errors => assignment.errors.full_messages.to_sentence }, :status => 422
+      end
     else
-      render :json => { :errors => assignment.errors.full_messages.to_sentence }, :status => 422
+      render :json => { :errors => "Please specify a bay_kind_id or a bay_id." }, :status => 422
     end
   end
 
@@ -56,9 +60,31 @@ class V1::AssignmentsController < ApplicationController
 
   private
 
+  def assignment_or_waiting(assignment,assignment_params)
+    # check to see if bay exists with this bay_kind_id that is also available (bay_status_id == 2)
+    bay = Bay.where(:bay_kind_id => params[:bay_kind_id], :bay_status_id => 2).floor_preference.number_preference.first
+
+    if bay.present?
+      assignment.bay_id = bay.id
+      assignment.save
+      render :json => { :message => "Assignment created.", :data => Assignment.assignment_join.common_attributes.find_by_id(assignment.id) }, :status => 201
+    else
+      waiting = Waiting.create(
+        :user_id => assignment_params[:user_id],
+        :bay_kind_id => asssignment_params[:bay_kind_id],
+        :floor => assignment_params[:floor],
+        :number => assignment_params[:number],
+        :credits_per_hour => asssignment_params[:credits_per_hour],
+        :duration => asssignment_params[:duration]
+      )
+      render :json => { :message => "Waiting created.", :data => waiting }, :status => 201
+    end
+  end
+
   def assignment_params
     _params = params.require(:assignment).permit(
-      :bay_id, :user_id, :credits_per_hour, :check_in_at, :check_out_at, :parent_id
+      :bay_id, :user_id, :credits_per_hour, :check_in_at, :duration,
+      :check_out_at, :parent_id, :bay_kind_id, :floor, :number
     )
   end
 end

@@ -14,6 +14,7 @@ module SpecHelpers
     Level.destroy_all
     Package.destroy_all
     User.destroy_all
+    Waiting.destroy_all
   end
 
   def create_user

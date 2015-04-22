@@ -4,6 +4,9 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :null_session, if: Proc.new { |c| c.request.format == 'application/json' }
   before_action :configure_permitted_parameters, if: :devise_controller?
 
+  devise_token_auth_group :all, contains: [:user, :employee, :admin]
+  devise_token_auth_group :employee_admin, contains: [:employee, :admin]
+
   protected
 
   # devise strong parameters for sign_up

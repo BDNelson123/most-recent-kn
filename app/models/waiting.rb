@@ -11,17 +11,18 @@ class Waiting < ActiveRecord::Base
   validates_model_id :user_id, :message => "must belong to a registered player", :model => User
   validates :bay_kind_id, :presence => true
   validates_model_id :bay_kind_id, :message => "must belong to a valid bay kind", :model => BayKind
-  validates_presence_of :preference_floor, :if => :preference_bay?
-  validate :bay_on_floor, :if => :preference_bay?
+  validates_presence_of :floor, :if => :number?
+  validate :bay_on_floor, :if => :number?
   validates_model_id :parent_id, :message => "must be a valid waiting", :model => Waiting, :if => :parent_id?
+  validates :duration, :presence => true, :numericality => { :only_integer => true }
 
   scope :common_attributes, -> { 
     select('
       waitings.id,
       waitings.user_id,
       waitings.bay_kind_id,
-      waitings.preference_floor,
-      waitings.preference_bay,
+      waitings.floor,
+      waitings.number,
       bay_kinds.name as bay_kinds_name,
       bay_kinds.description as bay_kinds_description,
       bay_kinds.credits_per_hour as bay_kinds_credits_per_hour,
@@ -45,7 +46,7 @@ class Waiting < ActiveRecord::Base
 
   # make sure bay exists on that floor
   def bay_on_floor
-    errors.add(:preference_bay, "does not exist on that floor") if
-      Bay.where(:floor => preference_floor, :number => preference_bay).count != 1
+    errors.add(:number, "does not exist on that floor") if
+      Bay.where(:floor => floor, :number => number).count != 1
   end
 end

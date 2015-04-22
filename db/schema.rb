@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150416192958) do
+ActiveRecord::Schema.define(version: 20150421184800) do
 
   create_table "admins", force: :cascade do |t|
     t.string   "provider",               limit: 255,                null: false
@@ -226,11 +226,13 @@ ActiveRecord::Schema.define(version: 20150416192958) do
   create_table "waitings", force: :cascade do |t|
     t.integer  "user_id",          limit: 4
     t.integer  "bay_kind_id",      limit: 4
-    t.integer  "preference_floor", limit: 4
-    t.integer  "preference_bay",   limit: 4
+    t.integer  "floor",            limit: 4
+    t.integer  "number",           limit: 4
     t.datetime "created_at",                 null: false
     t.datetime "updated_at",                 null: false
     t.integer  "parent_id",        limit: 4
+    t.integer  "credits_per_hour", limit: 4
+    t.integer  "duration",         limit: 4
   end
 
 end

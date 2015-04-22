@@ -3,7 +3,7 @@ require 'faker'
 
 FactoryGirl.define do
   factory :bay_status do
-    name { Faker::Company.name }
+    name { Faker::Name.name }
     description { Faker::Company.bs }
   end
 end

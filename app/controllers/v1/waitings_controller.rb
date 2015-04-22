@@ -1,9 +1,4 @@
 class V1::WaitingsController < ApplicationController
-
-
-
-
-
   before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
@@ -63,9 +58,4 @@ class V1::WaitingsController < ApplicationController
       :user_id, :bay_kind_id, :preference_floor, :preference_bay
     )
   end
-
-
-
-
-
 end
