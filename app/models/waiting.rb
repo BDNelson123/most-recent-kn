@@ -7,14 +7,17 @@ class Waiting < ActiveRecord::Base
   has_many :waitings, class_name: "Waiting", foreign_key: :parent_id
 
   validates :user_id, :presence => true
-  validates_uniqueness_of :user_id
-  validates_model_id :user_id, :message => "must belong to a registered player", :model => User
+  validates_uniqueness_of :user_id, :if => :user_id?
+  validates_model_id :user_id, :message => "must be a valid user", :model => User, :if => :user_id?
   validates :bay_kind_id, :presence => true
-  validates_model_id :bay_kind_id, :message => "must belong to a valid bay kind", :model => BayKind
+  validates_model_id :bay_kind_id, :message => "must be a valid bay kind", :model => BayKind, :if => :bay_kind_id?
   validates_presence_of :floor, :if => :number?
   validate :bay_on_floor, :if => :number?
   validates_model_id :parent_id, :message => "must be a valid waiting", :model => Waiting, :if => :parent_id?
-  validates :duration, :presence => true, :numericality => { :only_integer => true }
+  validates :duration, :presence => true
+  validates_numericality_of :duration, :if => :duration
+  validates :credits_per_hour, :presence => true
+  validates_numericality_of :credits_per_hour, :if => :credits_per_hour
 
   scope :common_attributes, -> { 
     select('
@@ -41,6 +44,18 @@ class Waiting < ActiveRecord::Base
   }
 
   scope :waiting_join, -> { joins(:user,:bay_kind) }
+
+  def self.create_from_assignment(params)
+    Waiting.new(
+      :user_id => params[:user_id], 
+      :bay_kind_id => params[:bay_kind_id], 
+      :floor => params[:floor],
+      :number => params[:number],
+      :parent_id => params[:parent_id],
+      :credits_per_hour => params[:credits_per_hour],
+      :duration => params[:duration]
+    )
+  end
 
   private
 

@@ -127,144 +127,286 @@ describe V1::AssignmentsController do
     # ------------------------------ #
 
     context "validation errors & response bodies" do
-      it "should return a response status of 422 if record is not created - no bay_id" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => nil, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Please specify a bay_kind_id or a bay_id.")
+      context "specific assignment - no waiting" do
+        it "should return a response status of 422 if record is not created - no bay_id" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => nil, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Please specify a bay_kind_id or a bay_id.")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - no bay_id" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => nil, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("User can't be blank")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - no credits_per_hour" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => nil, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Credits per hour can't be blank")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - no check_in_at" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => nil, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Check in at can't be blank")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - no check_out_at" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => nil}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at can't be blank")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - bay uniqueness" do
+          custom_sign_in @admin
+          assignment1 = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          user1 = FactoryGirl.create(:user, :wood_club_id => @club.id, :iron_club_id => @club.id, :level_id => @level.id, :income_id => @income.id)
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => user1.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Bay has already been taken")
+          assignment1.destroy
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - user uniqueness" do
+          custom_sign_in @admin
+          assignment1 = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          bay1 = FactoryGirl.create(:bay, :bay_status_id => @bay_status.id, :bay_kind_id => @bay_kind.id)
+          post :create, format: :json, :assignment => {:bay_id => bay1.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("User has already been taken")
+          assignment1.destroy
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - bay_id not valid" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay3.id + 1, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Bay must be a valid bay")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - user_id not valid" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user3.id + 1, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("User must be a valid user")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - parent_id not valid" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours, :parent_id => 1}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Parent must be a valid assignment")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - check_in_at being after check_out_at" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 13.hours, :check_out_at => DateTime.now + 12.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be after check in at")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - check_in_at being at same time as check_out_at" do
+          custom_sign_in @admin
+          time = DateTime.now + 12.hours
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => time, :check_out_at => time}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be after check in at")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - check_out_at being more than 12 hours after check_in_at" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 25.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be less than 12 hours after check in at")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - check_in_at being more than one hour in the past" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now - 90.minutes, :check_out_at => DateTime.now + 10.hours}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Check in at cannot be more than one hour in the past")
+        end
+
+        # --------------- #
+
+        it "should return a response status of 422 if record is not created - check_out_at being in the past" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at cannot be in the past")
+        end
       end
 
-      # --------------- #
+      # ------------------------------ #
+      # ------------------------------ #
 
-      it "should return a response status of 422 if record is not created - no bay_id" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => nil, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("User can't be blank")
-      end
+      context "waiting" do
+        it "should return a response status of 422 if record is not created - bay_id and bay_kind_id both present" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {
+            :bay_id => @bay.id, :bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute
+          }
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Please specify a bay_kind_id or a bay_id, not both")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - no credits_per_hour" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => nil, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Credits per hour can't be blank")
-      end
+        it "should return a response status of 422 if record is not created - no bay_kind_id or bay_id" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {
+            :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute
+          }
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Please specify a bay_kind_id or a bay_id")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - no check_in_at" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => nil, :check_out_at => DateTime.now + 13.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Check in at can't be blank")
-      end
+        it "should return a response status of 422 if record is not created - duration not present when bay_kind_id is present" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {
+            :bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute
+          }
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Duration can't be blank")
+          expect(JSON.parse(response.body)['errors'].to_s).to_not include("Duration is not a number")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - no check_out_at" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => nil}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at can't be blank")
-      end
+        it "should return a response status of 422 if record is not created - duration present but not a number when bay_kind_id is present" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => 1, :duration => "test"}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to_not include("Duration can't be blank")
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Duration is not a number")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - bay uniqueness" do
-        custom_sign_in @admin
-        assignment1 = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
-        user1 = FactoryGirl.create(:user, :wood_club_id => @club.id, :iron_club_id => @club.id, :level_id => @level.id, :income_id => @income.id)
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => user1.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Bay has already been taken")
-        assignment1.destroy
-      end
+        it "should return a response status of 422 if record is not created - duration present but not a number when bay_kind_id is present" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind.id, :user_id => nil, :credits_per_hour => 1, :duration => 90}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("User can't be blank")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - user uniqueness" do
-        custom_sign_in @admin
-        assignment1 = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
-        bay1 = FactoryGirl.create(:bay, :bay_status_id => @bay_status.id, :bay_kind_id => @bay_kind.id)
-        post :create, format: :json, :assignment => {:bay_id => bay1.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("User has already been taken")
-        assignment1.destroy
-      end
+        it "should return a response status of 422 if record is not created - duration present but not a number when bay_kind_id is present" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind.id, :user_id => @user3.id + 100, :credits_per_hour => 1, :duration => 90}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("User must be a valid user")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - bay_id not valid" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay3.id + 1, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Bay must be a valid bay")
-      end
+        it "should return a response status of 422 if record is not created - duration present but not a number when bay_kind_id is present" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => nil, :duration => 90}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Credits per hour can't be blank")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - user_id not valid" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user3.id + 1, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("User must be a valid user")
-      end
+        it "should return a response status of 422 if record is not created - duration present but not a number when bay_kind_id is present" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => "test", :duration => 90}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Credits per hour is not a number")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - parent_id not valid" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours, :parent_id => 1}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Parent must be a valid assignment")
-      end
+        it "should return a response status of 422 if record is not created - duration present but not a number when bay_kind_id is present" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind3.id + 1, :user_id => @user.id, :credits_per_hour => 1, :duration => 90}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Bay kind must be a valid bay kind")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - check_in_at being after check_out_at" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 13.hours, :check_out_at => DateTime.now + 12.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be after check in at")
-      end
+        it "should return a response status of 422 if record is not created - number given when floor not given" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind3.id, :user_id => @user.id, :credits_per_hour => 1, :duration => 90, :floor => nil, :number => 1}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Floor can't be blank and Number does not exist on that floor")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - check_in_at being at same time as check_out_at" do
-        custom_sign_in @admin
-        time = DateTime.now + 12.hours
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => time, :check_out_at => time}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be after check in at")
-      end
+        it "should return a response status of 422 if record is not created - number given when floor not given" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind3.id, :user_id => @user.id, :credits_per_hour => 1, :duration => 90, :floor => @bay3.floor, :number => @bay3.number.to_i + 1234}
+          expect(response.status).to eq(422)
+          expect(JSON.parse(response.body)['errors'].to_s).to include("Number does not exist on that floor")
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - check_out_at being more than 12 hours after check_in_at" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 25.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at must be less than 12 hours after check in at")
-      end
+        it "should return a response status of 201 if record is created with floor and number" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind3.id, :user_id => @user.id, :credits_per_hour => 1, :duration => 90, :floor => @bay3.floor, :number => @bay3.number}
+          expect(response.status).to eq(201)
+          expect(JSON.parse(response.body)['message'].to_s).to include("Waiting created")
+          expect(JSON.parse(response.body)['data']['bay_kind_id'].to_i).to eq(@bay_kind3.id.to_i)
+          expect(JSON.parse(response.body)['data']['user_id'].to_i).to eq(@user.id.to_i)
+          expect(JSON.parse(response.body)['data']['credits_per_hour'].to_i).to eq(1)
+          expect(JSON.parse(response.body)['data']['duration'].to_i).to eq(90)
+          expect(JSON.parse(response.body)['data']['floor']).to eq(@bay3.floor.to_i)
+          expect(JSON.parse(response.body)['data']['number']).to eq(@bay3.number.to_i)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should return a response status of 422 if record is not created - check_in_at being more than one hour in the past" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now - 90.minutes, :check_out_at => DateTime.now + 10.hours}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Check in at cannot be more than one hour in the past")
-      end
-
-      # --------------- #
-
-      it "should return a response status of 422 if record is not created - check_out_at being in the past" do
-        custom_sign_in @admin
-        post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute}
-        expect(response.status).to eq(422)
-        expect(JSON.parse(response.body)['errors'].to_s).to include("Check out at cannot be in the past")
+        it "should return a response status of 201 if record is created without floor and number" do
+          custom_sign_in @admin
+          post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => 1, :duration => 90}
+          expect(response.status).to eq(201)
+          expect(JSON.parse(response.body)['message'].to_s).to include("Waiting created")
+          expect(JSON.parse(response.body)['data']['bay_kind_id'].to_i).to eq(@bay_kind.id.to_i)
+          expect(JSON.parse(response.body)['data']['user_id'].to_i).to eq(@user.id.to_i)
+          expect(JSON.parse(response.body)['data']['credits_per_hour'].to_i).to eq(1)
+          expect(JSON.parse(response.body)['data']['duration'].to_i).to eq(90)
+          expect(JSON.parse(response.body)['data']['floor']).to eq(nil)
+          expect(JSON.parse(response.body)['data']['number']).to eq(nil)
+        end
       end
     end
 
@@ -272,145 +414,197 @@ describe V1::AssignmentsController do
     # ------------------------------ #
 
     context "database record creation" do
-      it "should not create a record if no one is not logged in" do
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+      context "waiting" do
+        it "should not create a waiting record - bay_id and bay_kind_id both present" do
+          custom_sign_in @admin
+          expect {
+            post :create, format: :json, :assignment => {
+              :bay_id => @bay.id, :bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute
+            }
+          }.to change(Waiting, :count).by(0)
+        end
+
+        # --------------- #
+
+        it "should not create a waiting record - no bay_kind_id or bay_id" do
+          custom_sign_in @admin
+          expect {
+            post :create, format: :json, :assignment => {
+              :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute
+            }
+          }.to change(Waiting, :count).by(0)
+        end
+
+        # --------------- #
+
+        it "should not create a waiting record - duration not present when bay_kind_id is present" do
+          custom_sign_in @admin
+          expect {
+            post :create, format: :json, :assignment => {
+              :bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute
+            }
+          }.to change(Waiting, :count).by(0)
+        end
+
+        # --------------- #
+
+        it "should not create a waiting record - duration present but not a number when bay_kind_id is present" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => 1, :duration => "test"}}.to change(Waiting, :count).by(0)
+        end
+
+        # --------------- #
+
+        it "should create a waiting record" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_kind_id => @bay_kind.id, :user_id => @user.id, :credits_per_hour => 1, :duration => 90}}.to change(Waiting, :count).by(1)
+        end
       end
 
-      # --------------- #
+      # ------------------------------ #
+      # ------------------------------ #
 
-      it "should not create a record if user is logged in" do
-        custom_sign_in @user
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-      end
+      context "assignment" do
+        it "should not create a record if no one is not logged in" do
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should create a record if employee is logged in" do
-        custom_sign_in @employee
-        check_in_at = DateTime.now + 12.hours
-        check_out_at = DateTime.now + 13.hours
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => check_in_at, :check_out_at => check_out_at}}.to change(Assignment, :count).by(1)
-      end
+        it "should not create a record if user is logged in" do
+          custom_sign_in @user
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should create a record if admin is logged in" do
-        custom_sign_in @admin
-        check_in_at = DateTime.now + 12.hours
-        check_out_at = DateTime.now + 13.hours
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(1)
-      end
+        it "should create a record if employee is logged in" do
+          custom_sign_in @employee
+          check_in_at = DateTime.now + 12.hours
+          check_out_at = DateTime.now + 13.hours
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => check_in_at, :check_out_at => check_out_at}}.to change(Assignment, :count).by(1)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - no bay_id" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => nil, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should create a record if admin is logged in" do
+          custom_sign_in @admin
+          check_in_at = DateTime.now + 12.hours
+          check_out_at = DateTime.now + 13.hours
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(1)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - no bay_id" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => nil, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - no bay_id" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => nil, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - no credits_per_hour" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => nil, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - no bay_id" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => nil, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - no check_in_at" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => nil, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - no credits_per_hour" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => nil, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - no check_out_at" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => nil}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - no check_in_at" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => nil, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - bay uniqueness" do
-        custom_sign_in @admin
-        assignment1 = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
-        user1 = FactoryGirl.create(:user, :wood_club_id => @club.id, :iron_club_id => @club.id, :level_id => @level.id, :income_id => @income.id)
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => user1.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-        assignment1.destroy
-      end
+        it "should not create record in database - no check_out_at" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => nil}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - user uniqueness" do
-        custom_sign_in @admin
-        assignment1 = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
-        bay1 = FactoryGirl.create(:bay, :bay_status_id => @bay_status.id, :bay_kind_id => @bay_kind.id)
-        expect {post :create, format: :json, :assignment => {:bay_id => bay1.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-        assignment1.destroy
-      end
+        it "should not create record in database - bay uniqueness" do
+          custom_sign_in @admin
+          assignment1 = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          user1 = FactoryGirl.create(:user, :wood_club_id => @club.id, :iron_club_id => @club.id, :level_id => @level.id, :income_id => @income.id)
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => user1.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+          assignment1.destroy
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - bay_id not valid" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id + 1, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - user uniqueness" do
+          custom_sign_in @admin
+          assignment1 = FactoryGirl.create(:assignment, :bay_id => @bay.id, :user_id => @user.id)
+          bay1 = FactoryGirl.create(:bay, :bay_status_id => @bay_status.id, :bay_kind_id => @bay_kind.id)
+          expect {post :create, format: :json, :assignment => {:bay_id => bay1.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+          assignment1.destroy
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - user_id not valid" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user3.id + 1, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - bay_id not valid" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id + 1, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - parent_id not valid" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours, :parent_id => 1}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - user_id not valid" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user3.id + 1, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - check_in_at being after check_out_at" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 13.hours, :check_out_at => DateTime.now + 12.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - parent_id not valid" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 13.hours, :parent_id => 1}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - check_in_at being at same time as check_out_at" do
-        custom_sign_in @admin
-        time = DateTime.now + 12.hours
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => time, :check_out_at => time}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - check_in_at being after check_out_at" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 13.hours, :check_out_at => DateTime.now + 12.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - check_out_at being more than 12 hours after check_in_at" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 25.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - check_in_at being at same time as check_out_at" do
+          custom_sign_in @admin
+          time = DateTime.now + 12.hours
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => time, :check_out_at => time}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - check_in_at being more than one hour in the past" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now - 90.minutes, :check_out_at => DateTime.now + 10.hours}}.to change(Assignment, :count).by(0)
-      end
+        it "should not create record in database - check_out_at being more than 12 hours after check_in_at" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now + 25.hours}}.to change(Assignment, :count).by(0)
+        end
 
-      # --------------- #
+        # --------------- #
 
-      it "should not create record in database - check_out_at being in the past" do
-        custom_sign_in @admin
-        expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute}}.to change(Assignment, :count).by(0)
+        it "should not create record in database - check_in_at being more than one hour in the past" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now - 90.minutes, :check_out_at => DateTime.now + 10.hours}}.to change(Assignment, :count).by(0)
+        end
+
+        # --------------- #
+
+        it "should not create record in database - check_out_at being in the past" do
+          custom_sign_in @admin
+          expect {post :create, format: :json, :assignment => {:bay_id => @bay.id, :user_id => @user.id, :credits_per_hour => 1, :check_in_at => DateTime.now + 12.hours, :check_out_at => DateTime.now - 1.minute}}.to change(Assignment, :count).by(0)
+        end
       end
     end
   end
@@ -646,7 +840,7 @@ describe V1::AssignmentsController do
       it "should return correct incorrect query due to id not being namespaced" do
         custom_sign_in @admin
         get :index, format: :json, :where => "id > #{@assignment1.id}"
-        expect(JSON.parse(response.body)['errors']).to include("Your query is invalid.")
+        expect(JSON.parse(response.body)['errors']).to include("Your query is invalid")
       end
 
       # --------------- #
@@ -704,7 +898,7 @@ describe V1::AssignmentsController do
       it "should return an error if the query is invalid" do
         custom_sign_in @admin
         get :index, format: :json, :where => "testtesttest='#{@bay2.number}'"
-        expect(JSON.parse(response.body)['errors']).to eq("Your query is invalid.")
+        expect(JSON.parse(response.body)['errors']).to eq("Your query is invalid")
         expect(response.status).to eq(422)
       end
     end

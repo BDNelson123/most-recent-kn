@@ -27,6 +27,20 @@ class Bay < ActiveRecord::Base
     nil
   }
 
+  scope :floor_preference, -> (params) {
+    if params[:floor] != nil
+      return where(:floor => params[:floor])
+    end
+    nil
+  }
+
+  scope :number_preference, -> (params) {
+    if params[:number] != nil
+      return where(:number => params[:number])
+    end
+    nil
+  }
+
   def self.bay_waiting(bay,waiting,status)
     if status.to_i != 2
       if waiting.floor != nil && waiting.number != nil && waiting.floor.to_i == bay.floor.to_i && waiting.number.to_i == params[:bay][:number].to_i

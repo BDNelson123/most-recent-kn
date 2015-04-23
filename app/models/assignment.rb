@@ -1,4 +1,6 @@
 class Assignment < ActiveRecord::Base
+  attr_accessor :bay_kind_id, :floor, :number, :duration
+
   include ActiveRecordBaseExtensionScope
   include CommonDateValidations
 
@@ -11,6 +13,7 @@ class Assignment < ActiveRecord::Base
   validates :bay_id, :presence => true
   validates :user_id, :presence => true
   validates :credits_per_hour, :presence => true
+  validates_numericality_of :credits_per_hour, :if => :credits_per_hour
   validates :check_in_at, :presence => true
   validates :check_out_at, :presence => true
   validates_uniqueness_of :bay_id
