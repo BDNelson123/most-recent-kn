@@ -1,4 +1,4 @@
-class V1::BaysController < ApplicationController
+class V1::BaysController < V1::ApiController
   before_action :authenticate_admin!, :only => [:create, :destroy], :unless => :master_api_key?
   before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
   before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:update]

@@ -1,4 +1,4 @@
-class V1::BayKindsController < ApplicationController
+class V1::BayKindsController < V1::ApiController
   before_action :authenticate_admin!, :only => [:create, :destroy, :update], :unless => :master_api_key?
 
   def create

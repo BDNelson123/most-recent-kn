@@ -1,4 +1,4 @@
-class V1::AssignmentsController < ApplicationController
+class V1::AssignmentsController < V1::ApiController
   before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
   before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:create, :update, :destroy]
 

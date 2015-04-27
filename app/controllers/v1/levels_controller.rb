@@ -1,4 +1,4 @@
-class V1::LevelsController < ApplicationController
+class V1::LevelsController < V1::ApiController
   before_action :authenticate_admin!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create

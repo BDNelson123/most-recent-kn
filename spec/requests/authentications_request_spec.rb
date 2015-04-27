@@ -1,4 +1,5 @@
 require 'spec_helper'
+include SpecHelpers
 
 describe "user authentication", :type => :request do
   before(:all) do
@@ -20,17 +21,13 @@ describe "user authentication", :type => :request do
 
   # destroying the clubs & users objects after tests run
   after(:all) do
-    Club.destroy_all
-    User.destroy_all
-    Income.destroy_all
-    User.destroy_all
-    Level.destroy_all
+    delete_factories
   end
 
   # this action is in the devise_token_auth registrations controller
   describe "#create" do
     it "create a user but not send back token b/c user has to be confirmed with email address" do
-      post = post '/user_auth', @user_create_hash
+      post '/user_auth', @user_create_hash
       expect(response.status).to eq(200)
       expect(JSON.parse(response.body)["status"]).to eq("success")
       expect(JSON.parse(response.body)["data"]["id"]).to eq(User.last.id)

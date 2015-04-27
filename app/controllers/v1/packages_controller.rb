@@ -1,4 +1,4 @@
-class V1::PackagesController < ApplicationController
+class V1::PackagesController < V1::ApiController
   before_action :authenticate_admin!, :only => [:create, :destroy, :update], :unless => :master_api_key?
   before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
 

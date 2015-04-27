@@ -1,4 +1,4 @@
-class V1::UsersController < ApplicationController
+class V1::UsersController < V1::ApiController
   before_action :authenticate_admin!, :only => [:destroy], :unless => :master_api_key?
   before_action -> { custom_authenticate_member(current_all) }, only: [:show]
   before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:index]
