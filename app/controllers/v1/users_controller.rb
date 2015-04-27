@@ -1,5 +1,4 @@
 class V1::UsersController < ApplicationController
-  before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:destroy], :unless => :master_api_key?
   before_action -> { custom_authenticate_member(current_all) }, only: [:show]
   before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:index]
@@ -25,8 +24,7 @@ class V1::UsersController < ApplicationController
 
     if user.blank?
       render :json => { :errors => "The user with id #{params[:id]} could not be found." }, :status => 422
-    else
-      user.destroy
+    elsif user.destroy
       render :json => { :data => "The user with id #{params[:id]} has been deleted." }, :status => 202
     end
   end

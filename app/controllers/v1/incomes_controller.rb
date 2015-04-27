@@ -1,5 +1,4 @@
 class V1::IncomesController < ApplicationController
-  before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create
@@ -17,8 +16,7 @@ class V1::IncomesController < ApplicationController
 
     if income.blank?
       render :json => { :errors => "The income with id #{params[:id]} could not be found." }, :status => 422
-    else
-      income.destroy
+    elsif income.destroy
       render :json => { :data => "The income with id #{params[:id]} has been deleted." }, :status => 202
     end
   end

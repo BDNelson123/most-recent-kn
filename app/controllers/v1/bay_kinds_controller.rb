@@ -1,5 +1,4 @@
 class V1::BayKindsController < ApplicationController
-  before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :destroy, :update], :unless => :master_api_key?
 
   def create
@@ -17,8 +16,7 @@ class V1::BayKindsController < ApplicationController
 
     if kind.blank?
       render :json => { :errors => "The bay kind with id #{params[:id]} could not be found." }, :status => 422
-    else
-      kind.destroy
+    elsif kind.destroy
       render :json => { :data => "The bay kind with id #{params[:id]} has been deleted." }, :status => 202
     end
   end

@@ -1,5 +1,4 @@
 class V1::BayStatusesController < ApplicationController
-  before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create
@@ -17,8 +16,7 @@ class V1::BayStatusesController < ApplicationController
 
     if status.blank?
       render :json => { :errors => "The bay status with id #{params[:id]} could not be found." }, :status => 422
-    else
-      status.destroy
+    elsif status.destroy
       render :json => { :data => "The bay status with id #{params[:id]} has been deleted." }, :status => 202
     end
   end

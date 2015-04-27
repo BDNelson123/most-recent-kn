@@ -1,5 +1,4 @@
 class V1::FeaturesController < ApplicationController
-  before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :update, :destroy], :unless => :master_api_key?
 
   def create
@@ -17,8 +16,7 @@ class V1::FeaturesController < ApplicationController
 
     if feature.blank?
       render :json => { :errors => "The feature with id #{params[:id]} could not be found." }, :status => 422
-    else
-      feature.destroy
+    elsif feature.destroy
       render :json => { :data => "The feature with id #{params[:id]} has been deleted." }, :status => 202
     end
   end

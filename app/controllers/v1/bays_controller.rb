@@ -1,5 +1,4 @@
 class V1::BaysController < ApplicationController
-  before_filter :set_params, :only => [:index]
   before_action :authenticate_admin!, :only => [:create, :destroy], :unless => :master_api_key?
   before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
   before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:update]
@@ -19,8 +18,7 @@ class V1::BaysController < ApplicationController
 
     if bay.blank?
       render :json => { :errors => "The bay with id #{params[:id]} could not be found." }, :status => 422
-    else
-      bay.destroy
+    elsif bay.destroy
       render :json => { :data => "The bay with id #{params[:id]} has been deleted." }, :status => 202
     end
   end
