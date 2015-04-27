@@ -645,14 +645,14 @@ describe V1::PackagesController, :type => :api do
             context "name" do
               it "should return user with name of 'a' for first result when ordering by name asc" do
                 get :index, format: :json, :order_by => "name", :order_direction => "ASC"
-                expect(JSON.parse(response.body)["data"][0]["name"]).to include("a")
+                expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("a")
               end
 
               # --------------- #
 
               it "should return user with name of 'z' for first result when ordering by name desc" do
                 get :index, format: :json, :order_by => "name", :order_direction => "DESC"
-                expect(JSON.parse(response.body)["data"][0]["name"]).to include("z")
+                expect(JSON.parse(response.body)["data"][0]["name"].downcase).to start_with("z")
               end
             end
           end
