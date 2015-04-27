@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   respond_to :json
   include DeviseTokenAuth::Concerns::SetUserByToken
   protect_from_forgery with: :null_session, if: Proc.new { |c| c.request.format == 'application/json' }
+  before_filter :set_params, :only => [:index]
   before_action :configure_permitted_parameters, if: :devise_controller?
 
   devise_token_auth_group :all, contains: [:user, :employee, :admin]

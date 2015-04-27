@@ -1,5 +1,4 @@
 class V1::AssignmentsController < ApplicationController
-  before_filter :set_params, :only => [:index]
   before_action -> { custom_authenticate_member(current_all) }, only: [:index, :show]
   before_action -> { custom_authenticate_member(current_employee_admin) }, only: [:create, :update, :destroy]
 
@@ -26,8 +25,7 @@ class V1::AssignmentsController < ApplicationController
 
     if assignment.blank?
       render :json => { :errors => "The assignment with id #{params[:id]} could not be found." }, :status => 422
-    else
-      assignment.destroy
+    elsif assignment.destroy
       render :json => { :data => "The assignment with id #{params[:id]} has been deleted." }, :status => 202
     end
   end
